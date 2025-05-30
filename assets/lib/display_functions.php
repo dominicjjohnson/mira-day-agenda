@@ -50,39 +50,55 @@ function get_parameters($atts) {
     */
 
 
-  extract( shortcode_atts( array (
-  'day' => '2025-10-02',
-  'debug' => false,
-  'track1' => 'track-1',
-  'track2' => 'track-2',
-  'track3' => 'track-3',
-  'track4' => 'track-4',
-  'alltracks' => 'all-tracks'
-  ), $atts ) );
+    $atts = shortcode_atts([
+        'day'    => '',
+        'track1' => '',
+        'track2' => '',
+        'track3' => '',
+        'track4' => '',
+        'track5' => '',
+        'track6' => '',
+    ], $atts);
 
-  $track1 = 'stream-three-energy';
-  $track2 = 'consumer-confidence';
-  $track3 = 'stream-two-finance';
-  $track4 = 'stream-one-fleet-transition-case-studies';
+    // Extract values into individual variables
+    $day    = esc_html($atts['day'] ?? '');
+    $alltracks = esc_html($atts['all-tracks'] ?? 'all-tracks');
+    $track1 = esc_html($atts['track1'] ?? '');
+    $track2 = esc_html($atts['track2'] ?? '');
+    $track3 = esc_html($atts['track3'] ?? '');
+    $track4 = esc_html($atts['track4'] ?? '');
+    $track5 = esc_html($atts['track5'] ?? '');
+    $track6 = esc_html($atts['track6'] ?? '');
+    $track7 = esc_html($atts['track7'] ?? '');
+    $track8 = esc_html($atts['track8'] ?? '');
 
-  // For now, we will return an empty array
   $inputs = array();
-  $inputs['day'] = $day;
-  $inputs['debug'] = $debug;
-  $inputs['trackslugs'] = array(
-    1 => $track1,
-    2 => $track2,
-    3 => $track3,
-    4 => $track4,
-  );
-  $inputs['all-tracks'] = $alltracks;
+
+    if (empty($day)) {
+        $inputs['error'] = true;
+        $inputs['error_message'] = "No day value set.";
+    } else {
+        $inputs['error'] = false;
+        $inputs['day'] = $day;
+        $inputs['trackslugs'] = array(
+            1 => $track1,
+            2 => $track2,
+            3 => $track3,
+            4 => $track4,
+            5 => $track5,
+            6 => $track6,
+            7 => $track7,
+            8 => $track8,
+        );
+        $inputs['all-tracks'] = $alltracks;
+    }
 
   return $inputs;
     
 } // End Functions
 
 function get_css_slots ($time_slots, $track_background_colour, $track_text_colour) {
-
+    
   $output = "<style>\n";
   $output .= "\n  @media screen and (min-width:700px) {\n";
   $output .= "    .schedule {\n";
@@ -95,19 +111,27 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   $last_key = end($keys);
   foreach ($time_slots as $key => $value) {
     if ($key === $last_key) {
-      $output .= "        [{$key}] 1fr;\n";
+      $output .= "        [{$key}] auto;\n";
     } else {
-      $output .= "        [{$key}] 1fr\n";
+      $output .= "        [{$key}] auto\n";
     }
   }
 
   $output .= "      grid-template-columns:\n";
   $output .= "        [times] 4em\n";
-  $output .= "        [track-1-start] 1fr\n";
-  $output .= "        [track-1-end track-2-start] 1fr\n";
-  $output .= "        [track-2-end track-3-start] 1fr\n";
-  $output .= "        [track-3-end track-4-start] 1fr\n";
-  $output .= "        [track-4-end];\n";
+  
+  
+$output .= "        [track-1-start] 1fr\n";
+$output .= "        [track-1-end track-2-start] 1fr\n";
+$output .= "        [track-2-end track-3-start] 1fr\n";
+$output .= "        [track-3-end track-4-start] 1fr\n";
+$output .= "        [track-4-end track-5-start] 1fr\n";
+$output .= "        [track-5-end track-6-start] 1fr\n";
+$output .= "        [track-6-end];\n";
+
+
+
+
   $output .= "    }\n";
   $output .= "  }\n";
   $output .= "  \n";
@@ -116,26 +140,36 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   $output .= "   * Design-y stuff ot particularly important to the demo\n";
   $output .= "   *************************/\n";
   $output .= "  \n";
-  $output .= "  .track-1 {\n";
+  $output .= "  .track-1, .track-1 a {\n";
   $output .= "    background-color: {$track_background_colour['track-1']};\n";
   $output .= "    color: {$track_text_colour['track-1']};\n";
   $output .= "  }\n";
   $output .= "  \n";
-  $output .= "  .track-2 {\n";
+  $output .= "  .track-2, .track-2 a {\n";
   $output .= "    background-color: {$track_background_colour['track-2']};\n";
   $output .= "    color: {$track_text_colour['track-2']};\n";
   $output .= "  }\n";
   $output .= "  \n";
-  $output .= "  .track-3 {\n";
+  $output .= "  .track-3, .track-3 a {\n";
   $output .= "    background-color: {$track_background_colour['track-3']};\n";
   $output .= "    color: {$track_text_colour['track-3']};\n";
   $output .= "  }\n";
   $output .= "  \n";
-  $output .= "  .track-4 {\n";
-  $output .= "    background-color: {$track_background_colour['track-4']};\n";
-  $output .= "    color: {$track_text_colour['track-4']};\n";
-  $output .= "  }\n";
+    $output .= "  .track-4, .track-4 a {\n";
+    $output .= "    background-color: {$track_background_colour['track-4']};\n";
+    $output .= "    color: {$track_text_colour['track-4']};\n";
+    $output .= "  }\n";
+    $output .= "  .track-5, .track-5 a {\n";
+    $output .= "    background-color: {$track_background_colour['track-5']};\n";
+    $output .= "    color: {$track_text_colour['track-5']};\n";
+    $output .= "  }\n";
+    $output .= "  .track-6, .track-6 a {\n";
+    $output .= "    background-color: {$track_background_colour['track-6']};\n";
+    $output .= "    color: {$track_text_colour['track-6']};\n";
+    $output .= "  }\n";
+
   $output .= "\n";
+  $output .= "  .track-1, \n";
   $output .= "  .track-1 .session-time,\n";
   $output .= "  .track-1 .session-track,\n";
   $output .= "  .track-1 .session-presenter,\n";
@@ -157,12 +191,37 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   $output .= "    color: {$track_text_colour['track-3']};\n";
   $output .= "  }\n";
   $output .= "\n";
-  $output .= "  .track-4 .session-time,\n";
-  $output .= "  .track-4 .session-track,\n";
-  $output .= "  .track-4 .session-presenter,\n";
-  $output .= "  .track-4 .session-title a {\n";
-  $output .= "    color: {$track_text_colour['track-4']};\n";
-  $output .= "  }\n";
+$output .= "  .track-4 .session-time,\n";
+$output .= "  .track-4 .session-track,\n";
+$output .= "  .track-4 .session-presenter,\n";
+$output .= "  .track-4 .session-title a {\n";
+$output .= "    color: {$track_text_colour['track-4']};\n";
+$output .= "  }\n";
+
+$output .= "  .track-5 {\n";
+$output .= "    background-color: {$track_background_colour['track-5']};\n";
+$output .= "    color: {$track_text_colour['track-5']};\n";
+$output .= "  }\n";
+$output .= "  .track-5 .session-time,\n";
+$output .= "  .track-5 .session-track,\n";
+$output .= "  .track-5 .session-presenter,\n";
+$output .= "  .track-5 .session-title a {\n";
+$output .= "    color: {$track_text_colour['track-5']};\n";
+$output .= "  }\n";
+
+$output .= "  .track-6 {\n";
+$output .= "    background-color: {$track_background_colour['track-6']};\n";
+$output .= "    color: {$track_text_colour['track-6']};\n";
+$output .= "  }\n";
+$output .= "  .track-6 .session-time,\n";
+$output .= "  .track-6 .session-track,\n";
+$output .= "  .track-6 .session-presenter,\n";
+$output .= "  .track-6 .session-title a {\n";
+$output .= "    color: {$track_text_colour['track-6']};\n";
+$output .= "  }\n";
+
+
+
   $output .= "\n";
   $output .= "  .track-all {\n";
   $output .= "    display: flex;\n";
@@ -189,7 +248,7 @@ function get_schedule_header($headings) {
     foreach ($headings as $key => $value) {
         if ($key !== 'track-all') {
             $output .= <<<HTML
-            <span class="track-slot" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
+            <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
             HTML;
         }
     }
@@ -213,83 +272,92 @@ function add_session(&$sessions, $rowID, $sessionID, $trackID, $gridColumn, $gri
 }
 
 function get_headings($data,$inputs) {
-/*
-  get all the tracks and their names. 
-  Return an array of track names with the key being the track slug
-  This is used to create the grid header
-  $tracknames = array(
-    'track-1' => 'Track 1',
-    'track-2' => 'Track 2',
-    'track-3' => 'Track 3',
-    'track-4' => 'Track 4',
-    'track-all' => 'All Tracks'
-  );  
+  /*
+    get all the tracks and their names. 
 
-*/
-
-$headings = array();
-$track_background_colour = array();
-$track_text_colour = array();
-
-$unique_tracks = array(); // Declare the array outside the loop
-
-if ($data->have_posts()) {
+    RETURNS:
+    $headings: an array of headings with the key being the track slug, e.g. [track-3] =&gt; Finance
+    $track_background_colour: an array of track background colours with the key being the track slug
+    $track_text_colour: an array of track text colours with the key being the track slug  
+  */
+  
+  $headings = array();
+  $track_background_colour = array();
+  $track_text_colour = array();
+  
+  $unique_tracks = array(); // Declare the array outside the loop
+  
+if ($data instanceof WP_Query && $data->have_posts()) {
+      // Loop through posts
   while ($data->have_posts()) {
-    $data->the_post();
-    $tracks = get_the_terms(get_the_ID(), 'track');
+      $data->the_post();
+      $tracks = get_the_terms(get_the_ID(), 'track');
+  
+      if (!empty($tracks) && !is_wp_error($tracks)) {
+        foreach ($tracks as $track) {
+          // Check if the track term ID is not already in the array
+          if (!isset($unique_tracks[$track->term_id])) {
+            $unique_tracks[$track->slug] = $track->name;
+            // The old seminar system used the meta_key 'color'. The new one - 'term-color' for the track background colour
+            if (!isset($track_background_colour[$track->slug])) {
+                $track_background_colour[$track->slug] = get_term_meta($track->term_id, 'term-color', true);
+                if (empty($track_background_colour[$track->slug])) {
+                  $track_background_colour[$track->slug] = get_term_meta($track->term_id, 'color', true);
+                }
+            }
+            if (!isset($track_text_colour[$track->slug])) {
+              $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
+            }
 
-    if (!empty($tracks) && !is_wp_error($tracks)) {
-      foreach ($tracks as $track) {
-        // Check if the track term ID is not already in the array
-        if (!isset($unique_tracks[$track->term_id])) {
-          $unique_tracks[$track->slug] = $track->name;
-          if (!isset($track_background_colour[$track->slug])) {
-            $track_background_colour[$track->slug] = get_term_meta($track->term_id, 'highlight_color', true);
-          }
-          if (!isset($track_text_colour[$track->slug])) {
-            $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
+            $meta_text_colour = get_term_meta($track->term_id, 'track_text_colour', true);
+            if ($meta_text_colour === 'lighttext') {
+                $track_text_colour[$track->slug] = '#ffffff'; // White text for lighttext
+            } else {
+                $track_text_colour[$track->slug] = '#000000'; // Black text otherwise
+            }
           }
         }
       }
     }
   }
-}
-
-foreach ($unique_tracks as $slug => $track_name) {
-
-  // Get the background colour of the track - using the slug
+  else {
+      echo "No posts found or query failed.";
+  }
   
-
-  if ($slug != "all-tracks") {
-    $key = array_search($slug, $inputs['trackslugs']);
-    if ($key !== false) {
-      $headings['track-' . $key] = $track_name;
-      // Set the colours - going to keep the slugs and colours in addition to the track-n as we might need later.
-      $track_background_colour['track-' . $key] = $track_background_colour[$slug];
-      $track_text_colour['track-' . $key] =       $track_text_colour[$slug];
+  foreach ($unique_tracks as $slug => $track_name) {
+  
+    // Get the background colour of the track - using the slug
+    
+  
+    if ($slug != "all-tracks") {
+      $key = array_search($slug, $inputs['trackslugs']);
+      if ($key !== false) {
+        $headings['track-' . $key] = $track_name;
+        // Set the colours - going to keep the slugs and colours in addition to the track-n as we might need later.
+        $track_background_colour['track-' . $key] = $track_background_colour[$slug];
+        $track_text_colour['track-' . $key] =       $track_text_colour[$slug];
+      }
+    }
+    else {
+      $headings['track-all'] = $track_name;
+      $track_background_colour['track-all'] = $track_background_colour[$slug];
+      $track_text_colour['track-all'] =       $track_text_colour[$slug];
     }
   }
-  else {
-    $headings['track-all'] = $track_name;
-    $track_background_colour['track-all'] = $track_background_colour[$slug];
-    $track_text_colour['track-all'] =       $track_text_colour[$slug];
-  }
-}
-
-$headings['track-all'] = 'All Tracks';
-
-return array(
-  'headings' => $headings,
-  'track_background_colour' => $track_background_colour,
-  'track_text_colour' => $track_text_colour,
-);
+  
+  $headings['track-all'] = 'All Tracks';
+  
+  return array(
+    'headings' => $headings,
+    'track_background_colour' => $track_background_colour,
+    'track_text_colour' => $track_text_colour,
+  );
 
 }
 
 function get_args ($inputs) {
 
-
-  $day = "2025-10-01"; // This should be the date entered by the user in YYYY-MM-DD format
+  $day = $inputs['day']; // This should be the date entered by the user in YYYY-MM-DD format
 
   	// get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
 
@@ -311,11 +379,8 @@ function get_args ($inputs) {
     ),
   );
 
-
   return $args;
 } 
-
-
 
 function get_raw_agenda_data($args) {
   // This function should return the raw agenda data
@@ -323,9 +388,16 @@ function get_raw_agenda_data($args) {
 
   $data = new WP_Query($args);
   if (!$data->have_posts()) {
-    return false; // No posts found
+    return [
+        'error' => true,
+        'error_message' => 'No posts found.',
+    ];
   }
-  return $data;
+
+  return [
+    'error' => false,
+    'data'  => $data,
+  ];
 }
 
 function remove_comma_from_time($time) {
@@ -353,7 +425,7 @@ function get_grid_session_data($data, $trackslugs) {
       $tracks = get_the_terms(get_the_ID(), 'track');
 
       if (!empty($tracks) && !is_wp_error($tracks) && $tracks[0]->slug == "all-tracks") {
-        $track_cols = "track-1-start / track-4-end";
+        $track_cols = "track-1-start / track-6-end";
 
         add_session(
           $sessions,
@@ -443,7 +515,7 @@ function get_one_speaker_html($speaker_post) {
 }
 
 
-function get_speaker_block_html ($postid) {
+function get_speaker_block_html ($postid, $track) {
 
   $output = '';
   // This function should return the speaker block HTML
@@ -513,7 +585,7 @@ function get_speaker_block_html ($postid) {
             . 'class="speaker-img-clickable" data-modal="' . esc_attr($modal_id) . '">';
         }
         $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
-        $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
+        $output .= '<p style="margin:0;" class="'.$track.'"><strong>' . esc_html($speaker_name) . '</strong>';
         if ($speaker_job) {
           $output .= '<br>' . esc_html($speaker_job);
         }
@@ -532,7 +604,7 @@ function get_speaker_block_html ($postid) {
           </div>
         </div>
         ';
-        // Add JS and CSS only once per page (outside the loop)
+        // Add JS and only once per page (outside the loop)
         static $speaker_modal_script_output = false;
         if (!$speaker_modal_script_output) {
           $output .= '
@@ -592,9 +664,6 @@ function display_one_session ($sessions, $rowID) {
   $session_id = str_replace('session-', '', $sessions[$rowID]['sessionID']);
 
   // Check if the session is a special case
-
-  if ($sessions[$rowID]['trackID'] == "track-all") {
-
     $type_html = make_themes_types_html($session_id);
     $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
     $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
@@ -641,17 +710,26 @@ function display_one_session ($sessions, $rowID) {
     // We need to display the session details in a different format
     // For now, we will return an empty array
 
-    $speaker_html = get_speaker_block_html($session_id);
+    $speaker_html = get_speaker_block_html($session_id, $sessions[$rowID]['trackID']);
     if (empty($speaker_html)) {
      // $speaker_html = '<span class="session-presenter">No speakers</span>';
     }
+
+  if (!empty($full_content)) {
+    $details_link = get_permalink($session_id);
+    $session_title_link = '<a href="' . esc_url($details_link) . '">' . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
+  } else {
+    $session_title_link = esc_html($sessions[$rowID]['sessionsTitle']);
+  }
+
+  if ($sessions[$rowID]['trackID'] == "track-all") {
 
   $output = <<<HTML
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
 
     <div class="banner">
           {$type_html}
-        <h3><a href="#">{$sessions[$rowID]['sessionsTitle']}</a></h3>
+        <h3>{$session_title_link}</h3>
         <div class="event-details">
             <p><span class="icon">⏰</span> {$sessions[$rowID]['sessionTime']} - {$sessions[$rowID]['sessionTime']}</p>
             <p>{$post_content}</p>
@@ -669,10 +747,10 @@ function display_one_session ($sessions, $rowID) {
   else {
     $output = <<<HTML
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']};">
-      <h5 class="session-title"><a href="#">{$sessions[$rowID]['sessionsTitle']}</a></h5>
+      <h4 class="{$sessions[$rowID]['trackID']}">{$session_title_link}</h4>
       <span class="session-time">{$sessions[$rowID]['sessionTime']}</span>
       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
-      <span class="session-presenter">{$sessions[$rowID]['sessionPresenter']}</span>
+      <span class="session-presenter">{$speaker_html}</span>
     </div>
     HTML;
   }

@@ -5,8 +5,11 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.0
+ * Version: 1.1
  * Author: Miramedia / Dominic Johnson
+ * 
+ * Version 1.1 - 2025-05-30 - Updated for HCE 2025
+ * Version 1.0 - 2024-05-30 - Initial release for Evie
  */
 
  // Exit if accessed directly.
@@ -45,23 +48,34 @@ function mira_agenda_grid_old_shortcode($atts) {
     // HTML content to display with the shortcode
 
   $inputs = get_parameters($atts);
+  if (!empty($inputs['error'])) {
+    echo "<script>console.error(" . json_encode($inputs['error_message']) . ");</script>";
+    return $inputs;
+  }
 
-	// get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
-	$args = get_args($inputs); // need to upadate with the date
-
+  // Fetch the arguments for the query
+  // get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
+  $args = get_args($inputs); // need to upadate with the date
+  
   // Get the data for the agenda - just runs the query. Returns false if no data
-  $data = get_raw_agenda_data($args);
+  $result = get_raw_agenda_data($args);
 
+  if ($result['error']) {
+    die($result['error_message']); // Abort script execution
+  }
+
+  $data = $result['data'];
   $headings_data = get_headings($data, $inputs);
- 
+
   $headings = $headings_data['headings'];
   $track_background_colour = $headings_data['track_background_colour'];
   $track_text_colour = $headings_data['track_text_colour'];
- 
+
   // Get the session data - for a single day
   $sessions = get_grid_session_data($data,$inputs['trackslugs']);
 
   $time_slots = get_time_slots($data);
+
 
   echo get_css_slots($time_slots,$track_background_colour,$track_text_colour,$inputs); 
 
@@ -107,8 +121,3 @@ function mira_agenda_grid_old_enqueue_assets() {
   );
 }
 add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets' );
-
-
-
-
-
