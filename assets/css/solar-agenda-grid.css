@@ -221,3 +221,7 @@
     gap: 2em;
 }
 
+/* align the speakers left */
+.speaker {
+    text-align: left !important; 
+}

@@ -5,13 +5,15 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.3
+ * Version: 1.4
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
  * Version 1.0 - 2024-05-30 - Initial release for Evie
  * Version 1.2. 2025-06-02 - Finalised version, working on hce.
  * Version 1.3. 2025-06-03 - Fixed a bug in All Tracks
+ * Version 1.4. 2025-06-03 - Fixed bug with this track colour names
+ 
  */
 
  // Exit if accessed directly.

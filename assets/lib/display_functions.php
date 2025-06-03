@@ -280,7 +280,11 @@ if ($data instanceof WP_Query && $data->have_posts()) {
                 $track_background_colour[$track->slug] = get_term_meta($track->term_id, 'term-color', true);
                 if (empty($track_background_colour[$track->slug])) {
                   $track_background_colour[$track->slug] = get_term_meta($track->term_id, 'color', true);
+                  if (empty($track_background_colour[$track->slug])) { 
+                     $track_background_colour[$track->slug] = get_term_meta($track->term_id, 'highlight_color', true);
+                   }
                 }
+                
             }
             if (!isset($track_text_colour[$track->slug])) {
               $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
