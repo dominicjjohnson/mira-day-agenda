@@ -4,7 +4,7 @@
  @media screen and (min-width:700px) {
     .schedule {
       display: grid;
-      grid-gap: 1em;
+      grid-gap: 0.25em;
       grid-template-rows:
         [tracks] auto
         [time-0800] 1fr
@@ -197,3 +197,25 @@
     .modal-content { background: #fff; margin: 10% auto; padding: 20px; border-radius: 4px; width: 90%; max-width: 600px; position: relative;}
     .close-modal { position: absolute; top: 10px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer;}
     .modal-body { margin: 20px; }
+
+
+  
+ /* Speaker details */
+ 
+ .roles-grid {
+    display: flex;
+    gap: 2em;
+}
+
+.track-1 .roles-grid,
+.track-2 .roles-grid,
+.track-3 .roles-grid,
+.track-4 .roles-grid,
+.track-5 .roles-grid,
+.track-6 .roles-grid,
+ .track-7 .roles-grid {
+    display: grid;
+    grid-template-columns: column;
+    gap: 2em;
+}
+

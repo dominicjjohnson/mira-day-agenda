@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Include the display & data functions file
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/cpt.php';
+require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/display_functions.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/data_functions.php';
 

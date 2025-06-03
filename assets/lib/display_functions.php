@@ -50,60 +50,68 @@ function get_parameters($atts) {
     */
 
 
-    $atts = shortcode_atts([
-        'day'    => '',
-        'track1' => '',
-        'track2' => '',
-        'track3' => '',
-        'track4' => '',
-        'track5' => '',
-        'track6' => '',
-    ], $atts);
+  $atts = shortcode_atts([
+      'day'    => '',
+      'track1' => '',
+      'track2' => '',
+      'track3' => '',
+      'track4' => '',
+      'track5' => '',
+      'track6' => '',
+  ], $atts);
 
-    // Extract values into individual variables
-    $day    = esc_html($atts['day'] ?? '');
-    $alltracks = esc_html($atts['all-tracks'] ?? 'all-tracks');
-    $track1 = esc_html($atts['track1'] ?? '');
-    $track2 = esc_html($atts['track2'] ?? '');
-    $track3 = esc_html($atts['track3'] ?? '');
-    $track4 = esc_html($atts['track4'] ?? '');
-    $track5 = esc_html($atts['track5'] ?? '');
-    $track6 = esc_html($atts['track6'] ?? '');
-    $track7 = esc_html($atts['track7'] ?? '');
-    $track8 = esc_html($atts['track8'] ?? '');
+  // Extract values into individual variables
+  $day    = esc_html($atts['day'] ?? '');
+  $alltracks = esc_html($atts['all-tracks'] ?? 'all-tracks');
+  $track1 = esc_html($atts['track1'] ?? '');
+  $track2 = esc_html($atts['track2'] ?? '');
+  $track3 = esc_html($atts['track3'] ?? '');
+  $track4 = esc_html($atts['track4'] ?? '');
+  $track5 = esc_html($atts['track5'] ?? '');
+  $track6 = esc_html($atts['track6'] ?? '');
+  $track7 = esc_html($atts['track7'] ?? '');
+  $track8 = esc_html($atts['track8'] ?? '');
 
   $inputs = array();
 
-    if (empty($day)) {
-        $inputs['error'] = true;
-        $inputs['error_message'] = "No day value set.";
-    } else {
-        $inputs['error'] = false;
-        $inputs['day'] = $day;
-        $inputs['trackslugs'] = array(
-            1 => $track1,
-            2 => $track2,
-            3 => $track3,
-            4 => $track4,
-            5 => $track5,
-            6 => $track6,
-            7 => $track7,
-            8 => $track8,
-        );
-        $inputs['all-tracks'] = $alltracks;
-    }
+  if (empty($day)) {
+      $inputs['error'] = true;
+      $inputs['error_message'] = "No day value set.";
+  } else {
+      $inputs['error'] = false;
+      $inputs['day'] = $day;
+      $inputs['trackslugs'] = array(
+          1 => $track1,
+          2 => $track2,
+          3 => $track3,
+          4 => $track4,
+          5 => $track5,
+          6 => $track6,
+          7 => $track7,
+          8 => $track8,
+      );
+      $inputs['all-tracks'] = $alltracks;
+
+      $track_count = 0;
+      foreach ($inputs['trackslugs'] as $slug) {
+        if (!empty($slug)) {
+          $track_count++;
+        }
+      }
+      $inputs['number_of_tracks'] = $track_count;
+  }
 
   return $inputs;
     
 } // End Functions
 
-function get_css_slots ($time_slots, $track_background_colour, $track_text_colour) {
+function get_css_slots ($time_slots, $track_background_colour, $track_text_colour,$inputs) {
     
   $output = "<style>\n";
   $output .= "\n  @media screen and (min-width:700px) {\n";
   $output .= "    .schedule {\n";
   $output .= "      display: grid;\n";
-  $output .= "      grid-gap: 1em;\n";
+  $output .= "      grid-gap: 0.25em;\n";
   $output .= "      grid-template-rows:\n";
   $output .= "        [tracks] auto\n";
 
@@ -119,18 +127,16 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
 
   $output .= "      grid-template-columns:\n";
   $output .= "        [times] 4em\n";
-  
-  
-$output .= "        [track-1-start] 1fr\n";
-$output .= "        [track-1-end track-2-start] 1fr\n";
-$output .= "        [track-2-end track-3-start] 1fr\n";
-$output .= "        [track-3-end track-4-start] 1fr\n";
-$output .= "        [track-4-end track-5-start] 1fr\n";
-$output .= "        [track-5-end track-6-start] 1fr\n";
-$output .= "        [track-6-end];\n";
-
-
-
+  $number_of_tracks = $inputs['number_of_tracks'];
+  // Dynamically generate grid columns based on $number_of_tracks
+  for ($i = 1; $i <= $number_of_tracks; $i++) {
+    if ($i === 1) {
+      $output .= "        [track-1-start] 1fr\n";
+    } else {
+      $output .= "        [track-" . ($i - 1) . "-end track-{$i}-start] 1fr\n";
+    }
+  }
+  $output .= "        [track-{$number_of_tracks}-end];\n";
 
   $output .= "    }\n";
   $output .= "  }\n";
@@ -140,107 +146,75 @@ $output .= "        [track-6-end];\n";
   $output .= "   * Design-y stuff ot particularly important to the demo\n";
   $output .= "   *************************/\n";
   $output .= "  \n";
-  $output .= "  .track-1, .track-1 a {\n";
-  $output .= "    background-color: {$track_background_colour['track-1']};\n";
-  $output .= "    color: {$track_text_colour['track-1']};\n";
-  $output .= "  }\n";
-  $output .= "  \n";
-  $output .= "  .track-2, .track-2 a {\n";
-  $output .= "    background-color: {$track_background_colour['track-2']};\n";
-  $output .= "    color: {$track_text_colour['track-2']};\n";
-  $output .= "  }\n";
-  $output .= "  \n";
-  $output .= "  .track-3, .track-3 a {\n";
-  $output .= "    background-color: {$track_background_colour['track-3']};\n";
-  $output .= "    color: {$track_text_colour['track-3']};\n";
-  $output .= "  }\n";
-  $output .= "  \n";
-    $output .= "  .track-4, .track-4 a {\n";
-    $output .= "    background-color: {$track_background_colour['track-4']};\n";
-    $output .= "    color: {$track_text_colour['track-4']};\n";
+
+  // Helper for safe value
+  function _safe_val($arr, $key, $default = '') {
+    return isset($arr[$key]) && $arr[$key] !== '' ? $arr[$key] : $default;
+  }
+
+  for ($i = 1; $i <= 7; $i++) {
+    $bg = _safe_val($track_background_colour, "track-$i");
+    $txt = _safe_val($track_text_colour, "track-$i");
+    if ($bg !== '' || $txt !== '') {
+      $output .= "  .track-{$i}, .track-{$i} a {\n";
+      if ($bg !== '') $output .= "    background-color: {$bg};\n";
+      if ($txt !== '') $output .= "    color: {$txt} !important;\n";
+      $output .= "  }\n";
+    }
+  }
+
+  $output .= "\n";
+  for ($i = 1; $i <= 7; $i++) {
+    $txt = _safe_val($track_text_colour, "track-$i");
+    if ($txt !== '') {
+      $output .= "  .track-{$i}, \n";
+      $output .= "  .track-{$i} .session-time,\n";
+      $output .= "  .track-{$i} .session-track,\n";
+      $output .= "  .track-{$i} .session-presenter p,\n";
+      $output .= "  .track-{$i} .session-title a {\n";
+      $output .= "    color: {$txt} !important;\n";
+      $output .= "  }\n";
+      $output .= "  .track-{$i} .speaker-role-title {\n";
+      $output .= "    color: {$txt} !important;\n";
+      $output .= "    text-align: left;\n";
+      $output .= "    font-size: 1.1em;\n";
+      $output .= "    margin-bottom: 0.7em;\n";
+      $output .= "    font-weight: bold;\n";
+      $output .= "    padding-top: 0.5em;\n";
+      $output .= "  }\n";
+      $output .= "\n";
+    }
+  }
+
+  // Track-all
+  $bg_all = _safe_val($track_background_colour, 'track-all');
+  $txt_all = _safe_val($track_text_colour, 'track-all');
+  if ($bg_all !== '' || $txt_all !== '') {
+    $output .= "  .track-all {\n";
+    $output .= "    display: flex;\n";
+    if ($bg_all !== '') $output .= "    background: {$bg_all};\n";
+    if ($txt_all !== '') $output .= "    color: {$txt_all};\n";
+    $output .= "    box-shadow: none;\n";
     $output .= "  }\n";
-    $output .= "  .track-5, .track-5 a {\n";
-    $output .= "    background-color: {$track_background_colour['track-5']};\n";
-    $output .= "    color: {$track_text_colour['track-5']};\n";
+    $output .= "  \n";
+    $output .= "  .track-all .session-time,\n";
+    $output .= "  .track-all .session-track,\n";
+    $output .= "  .track-all .session-presenter,\n";
+    $output .= "  .track-all .session-title a {\n";
+    if ($txt_all !== '') $output .= "    color: {$txt_all} !important;\n";
     $output .= "  }\n";
-    $output .= "  .track-6, .track-6 a {\n";
-    $output .= "    background-color: {$track_background_colour['track-6']};\n";
-    $output .= "    color: {$track_text_colour['track-6']};\n";
+    $output .= "  .track-all .speaker-role-title {\n";
+    if ($txt_all !== '') $output .= "    color: {$txt_all} !important;\n";
+    $output .= "    text-align: left;\n";
+    $output .= "    font-size: 1.1em;\n";
+    $output .= "    margin-bottom: 0.7em;\n";
     $output .= "  }\n";
+  }
 
-  $output .= "\n";
-  $output .= "  .track-1, \n";
-  $output .= "  .track-1 .session-time,\n";
-  $output .= "  .track-1 .session-track,\n";
-  $output .= "  .track-1 .session-presenter,\n";
-  $output .= "  .track-1 .session-title a {\n";
-  $output .= "    color: {$track_text_colour['track-1']};\n";
-  $output .= "  }\n";
-  $output .= "\n";
-  $output .= "  .track-2 .session-time,\n";
-  $output .= "  .track-2 .session-track,\n";
-  $output .= "  .track-2 .session-presenter,\n";
-  $output .= "  .track-2 .session-title a {\n";
-  $output .= "    color: {$track_text_colour['track-2']};\n";
-  $output .= "  }\n";
-  $output .= "\n";
-  $output .= "  .track-3 .session-time,\n";
-  $output .= "  .track-3 .session-track,\n";
-  $output .= "  .track-3 .session-presenter,\n";
-  $output .= "  .track-3 .session-title a {\n";
-  $output .= "    color: {$track_text_colour['track-3']};\n";
-  $output .= "  }\n";
-  $output .= "\n";
-$output .= "  .track-4 .session-time,\n";
-$output .= "  .track-4 .session-track,\n";
-$output .= "  .track-4 .session-presenter,\n";
-$output .= "  .track-4 .session-title a {\n";
-$output .= "    color: {$track_text_colour['track-4']};\n";
-$output .= "  }\n";
-
-$output .= "  .track-5 {\n";
-$output .= "    background-color: {$track_background_colour['track-5']};\n";
-$output .= "    color: {$track_text_colour['track-5']};\n";
-$output .= "  }\n";
-$output .= "  .track-5 .session-time,\n";
-$output .= "  .track-5 .session-track,\n";
-$output .= "  .track-5 .session-presenter,\n";
-$output .= "  .track-5 .session-title a {\n";
-$output .= "    color: {$track_text_colour['track-5']};\n";
-$output .= "  }\n";
-
-$output .= "  .track-6 {\n";
-$output .= "    background-color: {$track_background_colour['track-6']};\n";
-$output .= "    color: {$track_text_colour['track-6']};\n";
-$output .= "  }\n";
-$output .= "  .track-6 .session-time,\n";
-$output .= "  .track-6 .session-track,\n";
-$output .= "  .track-6 .session-presenter,\n";
-$output .= "  .track-6 .session-title a {\n";
-$output .= "    color: {$track_text_colour['track-6']};\n";
-$output .= "  }\n";
-
-
-
-  $output .= "\n";
-  $output .= "  .track-all {\n";
-  $output .= "    display: flex;\n";
-  $output .= "    background: {$track_background_colour['track-all']};\n";
-  $output .= "    color: {$track_text_colour['track-all']};\n";
-  $output .= "    box-shadow: none;\n";
-  $output .= "  }\n";
-  $output .= "  \n";
-  $output .= "  .track-all .session-time,\n";
-  $output .= "  .track-all .session-track,\n";
-  $output .= "  .track-all .session-presenter,\n";
-  $output .= "  .track-all .session-title a {\n";
-  $output .= "    color: {$track_text_colour['track-all']} !important;\n";
-  $output .= "  }\n";
   $output .= "\n</style>\n";
 
   return $output;
 }
-
 
 function get_schedule_header($headings) {
 
@@ -386,6 +360,7 @@ function get_raw_agenda_data($args) {
   // This function should return the raw agenda data
   // For now, we will return an empty array
 
+  $args['post_status'] = 'publish';
   $data = new WP_Query($args);
   if (!$data->have_posts()) {
     return [
@@ -409,8 +384,6 @@ function remove_comma_from_time($time) {
   // Remove the colon to return HHMM
   return str_replace(':', '', $time);
 }
-
-
 
 function get_grid_session_data($data, $trackslugs) {
   // This function should return the session data for the grid
@@ -507,14 +480,6 @@ function make_themes_types_html($sessionID) {
 
 }
 
-function get_one_speaker_html($speaker_post) {
-
-
-
-  return $output;
-}
-
-
 function get_speaker_block_html ($postid, $track) {
 
   $output = '';
@@ -539,7 +504,7 @@ function get_speaker_block_html ($postid, $track) {
   }
 
   // Start a wrapper for all roles
-  $output .= '<div class="roles-grid" style="display: flex; gap: 2em;">';
+  $output .= '<div class="roles-grid">';
 
   foreach( $roles as $roleslug ){
 
@@ -558,8 +523,8 @@ function get_speaker_block_html ($postid, $track) {
 
     // Only display the role column if there are speakers
     if (!empty($speakers)) {
-      $output .= '<div class="role-column" style="flex: 1 1 0; min-width: 180px;">';
-      $output .= '<h3 style="text-align:left; font-size:1.1em; margin-bottom:0.7em;">' . esc_html($role->post_title) . '</h3>';
+      $output .= '<div class="role-column" style="flex: 1">';
+      $output .= '<h3 class="speaker-role-title">' . esc_html($role->post_title) . '</h3>';
 
       foreach ($speakers as $speaker_post) {
         if (empty($speaker_post) || !is_numeric($speaker_post->ID)) {
@@ -585,7 +550,7 @@ function get_speaker_block_html ($postid, $track) {
             . 'class="speaker-img-clickable" data-modal="' . esc_attr($modal_id) . '">';
         }
         $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
-        $output .= '<p style="margin:0;" class="'.$track.'"><strong>' . esc_html($speaker_name) . '</strong>';
+        $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
         if ($speaker_job) {
           $output .= '<br>' . esc_html($speaker_job);
         }
@@ -726,12 +691,11 @@ function display_one_session ($sessions, $rowID) {
 
   $output = <<<HTML
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
-
     <div class="banner">
           {$type_html}
         <h3>{$session_title_link}</h3>
         <div class="event-details">
-            <p><span class="icon">⏰</span> {$sessions[$rowID]['sessionTime']} - {$sessions[$rowID]['sessionTime']}</p>
+            <p><span class="icon">⏰</span> {$sessions[$rowID]['sessionTime']}</p>
             <p>{$post_content}</p>
         </div>
 
@@ -756,31 +720,3 @@ function display_one_session ($sessions, $rowID) {
   }
   return $output;
 }
-
-
-/*
-    <div class="content-wrapper">
-        <div class="speakers">
-            <h2>Speakers</h2>
-            <div class="speaker-grid">
-                <div class="speaker">
-                    <img src="/evie/wp-content/uploads/2025/04/Matthew-Lumsden-CEO-Connected-Energy-400x400.jpg" alt="Adam Field">
-                    {$speaker_html}
-                    <p><strong>Adam Field</strong><br>Head of Marketing<br>Reiss</p>
-                </div>
-                <div class="speaker">
-                    <img src="/evie/wp-content/uploads/2025/04/Matthew-Lumsden-CEO-Connected-Energy-400x400.jpg" alt="Lou McEwen">
-                    <p><strong>Lou McEwen</strong><br>CMO<br>McLaren Racing</p>
-                </div>
-                <!-- Additional speakers go here -->
-            </div>
-        </div>
-        <div class="moderator">
-            <h2>Moderator</h2>
-            <div class="moderator-details">
-                <img src="/evie/wp-content/uploads/2025/04/Matthew-Lumsden-CEO-Connected-Energy-400x400.jpg" alt="Kerry Flynn">
-                <p><strong>Kerry Flynn</strong><br>Media Reporter<br>Axios</p>
-            </div>
-        </div>
-    </div>
-    */
