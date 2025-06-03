@@ -47,53 +47,57 @@ function display_grid ($sessions) {
 
 // Register the shortcode
 function mira_agenda_grid_old_shortcode($atts) {
+    // Start output buffering
+    ob_start();
+
     // HTML content to display with the shortcode
 
-  $inputs = get_parameters($atts);
-  if (!empty($inputs['error'])) {
-    echo "<script>console.error(" . json_encode($inputs['error_message']) . ");</script>";
-    return $inputs;
-  }
+    $inputs = get_parameters($atts);
+    if (!empty($inputs['error'])) {
+        echo "<script>console.error(" . json_encode($inputs['error_message']) . ");</script>";
+        return ob_get_clean();
+    }
 
-  // Fetch the arguments for the query
-  // get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
-  $args = get_args($inputs); // need to upadate with the date
-  
-  // Get the data for the agenda - just runs the query. Returns false if no data
-  $result = get_raw_agenda_data($args);
+    // Fetch the arguments for the query
+    // get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
+    $args = get_args($inputs); // need to upadate with the date
 
-  if ($result['error']) {
-    die($result['error_message']); // Abort script execution
-  }
+    // Get the data for the agenda - just runs the query. Returns false if no data
+    $result = get_raw_agenda_data($args);
 
-  $data = $result['data'];
-  $headings_data = get_headings($data, $inputs);
+    if ($result['error']) {
+        die($result['error_message']); // Abort script execution
+    }
 
-  $headings = $headings_data['headings'];
-  $track_background_colour = $headings_data['track_background_colour'];
-  $track_text_colour = $headings_data['track_text_colour'];
+    $data = $result['data'];
+    $headings_data = get_headings($data, $inputs);
 
-  // Get the session data - for a single day
-  $sessions = get_grid_session_data($data,$inputs['trackslugs']);
+    $headings = $headings_data['headings'];
+    $track_background_colour = $headings_data['track_background_colour'];
+    $track_text_colour = $headings_data['track_text_colour'];
 
-  $time_slots = get_time_slots($data);
+    // Get the session data - for a single day
+    $sessions = get_grid_session_data($data,$inputs['trackslugs'],$inputs['all-tracks']);
 
+    $time_slots = get_time_slots($data);
 
-  echo get_css_slots($time_slots,$track_background_colour,$track_text_colour,$inputs); 
+    echo get_css_slots($time_slots,$track_background_colour,$track_text_colour,$inputs); 
 
-  echo '<h2 id="schedule-heading">Conference Schedule</h2>';
-  echo '<div class="schedule" aria-labelledby="schedule-heading">';
-    
-  echo get_schedule_header($headings);
+    echo '<h2 id="schedule-heading">Conference Schedule</h2>';
+    echo '<div class="schedule" aria-labelledby="schedule-heading">';
+        
+    echo get_schedule_header($headings);
 
-  echo print_times($time_slots);
+    echo print_times($time_slots);
 
-  echo display_grid($sessions); 
-    
-  echo '</div>';
+    echo display_grid($sessions); 
+        
+    echo '</div>';
 
-  return ob_get_clean();
+    return ob_get_clean();
 }
+
+// Register the shortcode outside the function
 add_shortcode( 'agenda-grid', 'mira_agenda_grid_old_shortcode' );
 
 // Enqueue the CSS and JS files
@@ -123,3 +127,4 @@ function mira_agenda_grid_old_enqueue_assets() {
   );
 }
 add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets' );
+

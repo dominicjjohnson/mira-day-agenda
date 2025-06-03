@@ -17,7 +17,7 @@ if (function_exists('vc_map')) {
             array(
                 'type'        => 'textfield',
                 'heading'     => 'All Tracks Slug',
-                'param_name'  => 'all_tracks',
+                'param_name'  => 'all-tracks',
                 'description' => 'Enter the slug for "All Tracks" (max 25 chars).',
                 'admin_label' => true,
                 'maxlength'   => 25,
@@ -148,8 +148,6 @@ add_action('admin_footer', function () {
                 $('.vc_param_group[data-param-type="textfield"]').each(function () {
                     trackValues.push($(this).val());
                 });
-
-                var dateSlug = $('input[name="se_date"]').val();
 
                 $.post(ajaxurl, {
                     action: 'save_agenda_grid',

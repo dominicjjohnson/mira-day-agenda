@@ -170,6 +170,8 @@
   .track-all {
     display: flex;
     box-shadow: none;
+    border: 1px;
+    border-style: solid;
   }
   
   .text {

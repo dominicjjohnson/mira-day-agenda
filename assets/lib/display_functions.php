@@ -52,12 +52,15 @@ function get_parameters($atts) {
 
   $atts = shortcode_atts([
       'day'    => '',
+      'all-tracks' => '',
       'track1' => '',
       'track2' => '',
       'track3' => '',
       'track4' => '',
       'track5' => '',
       'track6' => '',
+      'track7' => '',
+      'track8' => ''
   ], $atts);
 
   // Extract values into individual variables
@@ -385,7 +388,7 @@ function remove_comma_from_time($time) {
   return str_replace(':', '', $time);
 }
 
-function get_grid_session_data($data, $trackslugs) {
+function get_grid_session_data($data, $trackslugs, $alltracks) {
   // This function should return the session data for the grid
 
   $sessions = array();
@@ -397,7 +400,8 @@ function get_grid_session_data($data, $trackslugs) {
 
       $tracks = get_the_terms(get_the_ID(), 'track');
 
-      if (!empty($tracks) && !is_wp_error($tracks) && $tracks[0]->slug == "all-tracks") {
+      if (!empty($tracks) && !is_wp_error($tracks) && $tracks[0]->slug == $alltracks) {
+
         $track_cols = "track-1-start / track-6-end";
 
         add_session(
