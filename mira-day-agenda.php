@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.4
+ * Version: 1.6
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -13,6 +13,7 @@
  * Version 1.2. 2025-06-02 - Finalised version, working on hce.
  * Version 1.3. 2025-06-03 - Fixed a bug in All Tracks
  * Version 1.4. 2025-06-03 - Fixed bug with this track colour names
+ * Version 1.5. 2024-06-04 - Changes to get right on solar
  
  */
 
@@ -60,6 +61,11 @@ function mira_agenda_grid_old_shortcode($atts) {
         echo "<script>console.error(" . json_encode($inputs['error_message']) . ");</script>";
         return ob_get_clean();
     }
+
+    echo '<pre style="background:#eee;padding:10px;border:1px solid #ccc;">';
+    print_r($inputs);
+    echo '</pre>';
+
 
     // Fetch the arguments for the query
     // get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format

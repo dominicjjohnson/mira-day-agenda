@@ -339,26 +339,57 @@ if ($data instanceof WP_Query && $data->have_posts()) {
 function get_args ($inputs) {
 
   $day = $inputs['day']; // This should be the date entered by the user in YYYY-MM-DD format
+  print_r($inputs); // Debugging line to check the inputs
 
   	// get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
 
 // dsplay all tracks only
 
-  $args = array(
+
+/*
+    [trackslugs] => Array
+        (
+            [1] => pre-construction-hurdles
+            [2] => optimisation
+            [3] => 2025-d1-investor
+            [4] => 
+            [5] => 
+            [6] => 
+            [7] => 
+            [8] => 
+        )
+
+    [all-tracks] => allcolumns
+*/
+
+// Collect non-empty track slugs
+$track_terms = array_filter($inputs['trackslugs']);
+
+$args = array(
     'post_type' => 'seminars',
     'posts_per_page' => -1,
     'meta_key' => 'time_start',
     'orderby' => 'meta_value',
     'order' => 'ASC',
     'tax_query' => array(
-      'relation' => 'AND',
-      array(
-        'taxonomy' => 'date',
-        'field' => 'slug',
-        'terms' => $day,
-      )
+        'relation' => 'AND',
+        array(
+            'taxonomy' => 'date',
+            'field' => 'slug',
+            'terms' => $day,
+        ),
+        // Only add the track taxonomy filter if there are tracks selected
+        !empty($track_terms) ? array(
+            'taxonomy' => 'track',
+            'field' => 'slug',
+            'terms' => $track_terms,
+        ) : null,
     ),
-  );
+);
+
+// Remove null values from tax_query (in case no tracks are selected)
+$args['tax_query'] = array_values(array_filter($args['tax_query']));
+
 
   return $args;
 } 
