@@ -15,6 +15,7 @@
  * Version 1.4. 2025-06-03 - Fixed bug with this track colour names
  * Version 1.5. 2024-06-04 - Changes to get right on solar
  
+ 
  */
 
  // Exit if accessed directly.
@@ -27,6 +28,18 @@ require_once plugin_dir_path( __FILE__ ) . 'assets/lib/cpt.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/display_functions.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/data_functions.php';
+
+function is_mobile() {
+    $user_agent = $_SERVER['HTTP_USER_AGENT'];
+    $mobile_agents = ['Android', 'iPhone', 'iPad', 'iPod', 'Windows Phone'];
+
+    foreach ($mobile_agents as $agent) {
+        if (stripos($user_agent, $agent) !== false) {
+            return true; // Detected a mobile device
+        }
+    }
+    return false; // Not a mobile device
+}
 
 function print_times($time_slots) {
 
@@ -41,12 +54,49 @@ return $output;
 }
 
 
-function display_grid ($sessions) {
+function display_grid ($sessions,$inputs,$headings) {
 
-  foreach ($sessions as $rowID => $session) {
-    echo display_one_session($sessions, $rowID);
+  // Displat the headings at the top of the page - might need to be a param.
+  echo get_schedule_header($headings); // Display headings once
+
+  // Look to see if you are to display headings
+  if ($inputs['headings'] === "yes") {
+      $display_headings_param = true;
   }
-
+  
+  if ($display_headings_param) {
+    $lastTrackID = null;
+    $display_headings = false;
+    $seenTracks = []; // Track which IDs have been processed
+    
+    foreach ($sessions as $rowID => $session) {
+        $currentTrackID = $session['trackID'];
+    
+        // Reset when encountering "track-all"
+        if ($currentTrackID == "track-all") {
+            $seenTracks = []; // Clear seen tracks
+            $display_headings = false;
+        } 
+        // Set display_headings to true for first occurrence of a new track after "track-all"
+        elseif ($lastTrackID == "track-all" || !in_array($currentTrackID, $seenTracks)) {
+            $display_headings = true;
+            $seenTracks[] = $currentTrackID; // Mark track as seen
+        } else {
+            $display_headings = false; // Prevent re-display for already seen tracks
+        }
+    
+        echo display_one_session($sessions, $rowID, $inputs, $headings, $display_headings);
+    
+        // Store last track ID for next iteration
+        $lastTrackID = $currentTrackID;
+    }
+  }
+  else {
+    // do not display the headings
+    foreach ($sessions as $rowID => $session) {
+        echo display_one_session($sessions, $rowID, $inputs, $headings,false);
+    }
+  }
 }
 
 // Register the shortcode
@@ -61,11 +111,6 @@ function mira_agenda_grid_old_shortcode($atts) {
         echo "<script>console.error(" . json_encode($inputs['error_message']) . ");</script>";
         return ob_get_clean();
     }
-
-    echo '<pre style="background:#eee;padding:10px;border:1px solid #ccc;">';
-    print_r($inputs);
-    echo '</pre>';
-
 
     // Fetch the arguments for the query
     // get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
@@ -92,14 +137,11 @@ function mira_agenda_grid_old_shortcode($atts) {
 
     echo get_css_slots($time_slots,$track_background_colour,$track_text_colour,$inputs); 
 
-    echo '<h2 id="schedule-heading">Conference Schedule</h2>';
     echo '<div class="schedule" aria-labelledby="schedule-heading">';
         
-    echo get_schedule_header($headings);
-
     echo print_times($time_slots);
 
-    echo display_grid($sessions); 
+    echo display_grid($sessions,$inputs,$headings); 
         
     echo '</div>';
 

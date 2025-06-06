@@ -2,21 +2,6 @@
 function get_time_slots($data){
 
     // This function should return the time slots for the schedule
-    // For now, we will return an empty array
-        $time_slots = array();
-    /*
-        $time_slots['time-0800'] = '8:00am';
-        $time_slots['time-0830'] = '8:30am';
-        $time_slots['time-0900'] = '9:00am';
-        $time_slots['time-0930'] = '9:30am';
-        $time_slots['time-1000'] = '10:00am';
-        $time_slots['time-1030'] = '10:30am';
-        $time_slots['time-1100'] = '11:00am';
-        $time_slots['time-1130'] = '11:30am';
-        $time_slots['time-1200'] = '12:00pm';
-    */
-// Harde coded time
-// 0900, 0910, 0925, 0940, 0950, 1020, 1100, 1130, 1230, 1400, 1420, 1440, 1500, 1520, 1600,1630, 1710, 1750, 1845
 
 $time_slots = [];
 $rtn =[];
@@ -46,13 +31,15 @@ function get_parameters($atts) {
   track3: the slug of the third track
   track4: the slug of the fourth track
   all-tracks: the slug of the all-tracks track
-
+  border: yes - add additional css classes to display the border and not the background colour
     */
 
 
   $atts = shortcode_atts([
       'day'    => '',
       'all-tracks' => '',
+      'border' => "",
+      'display_heading_bar' => "",
       'track1' => '',
       'track2' => '',
       'track3' => '',
@@ -74,6 +61,8 @@ function get_parameters($atts) {
   $track6 = esc_html($atts['track6'] ?? '');
   $track7 = esc_html($atts['track7'] ?? '');
   $track8 = esc_html($atts['track8'] ?? '');
+  $border = esc_html($atts['border'] ?? '');
+  $display_heading_bar = esc_html($atts['display_heading_bar'] ?? '');
 
   $inputs = array();
 
@@ -94,6 +83,8 @@ function get_parameters($atts) {
           8 => $track8,
       );
       $inputs['all-tracks'] = $alltracks;
+      $inputs['border'] = $border;
+      $inputs['display_heading_bar'] = $display_heading_bar;
 
       $track_count = 0;
       foreach ($inputs['trackslugs'] as $slug) {
@@ -159,8 +150,12 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
     $bg = _safe_val($track_background_colour, "track-$i");
     $txt = _safe_val($track_text_colour, "track-$i");
     if ($bg !== '' || $txt !== '') {
-      $output .= "  .track-{$i}, .track-{$i} a {\n";
+      $output .= "  .track-{$i} {\n";
       if ($bg !== '') $output .= "    background-color: {$bg};\n";
+      if ($txt !== '') $output .= "    color: {$txt} !important;\n";
+      $output .= "  }\n";
+      // Set the text color in the a. Used to be background too
+      $output .= "  .track-{$i} a {\n";
       if ($txt !== '') $output .= "    color: {$txt} !important;\n";
       $output .= "  }\n";
     }
@@ -185,13 +180,19 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
       $output .= "    font-weight: bold;\n";
       $output .= "    padding-top: 0.5em;\n";
       $output .= "  }\n";
+      $output .= ".border-track-{$i} {";
+      $output .= "    background-color: white;";
+      $output .= "    border-color: grey;";
+      $output .= "    border-style: solid;";
+      $output .= "  }";
+      
       $output .= "\n";
     }
   }
 
   // Track-all
-  $bg_all = _safe_val($track_background_colour, 'track-all');
-  $txt_all = _safe_val($track_text_colour, 'track-all');
+  $bg_all = $track_background_colour['allcolumns'];
+  $txt_all = $track_text_colour['allcolumns'];
   if ($bg_all !== '' || $txt_all !== '') {
     $output .= "  .track-all {\n";
     $output .= "    display: flex;\n";
@@ -206,12 +207,14 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
     $output .= "  .track-all .session-title a {\n";
     if ($txt_all !== '') $output .= "    color: {$txt_all} !important;\n";
     $output .= "  }\n";
+    
     $output .= "  .track-all .speaker-role-title {\n";
     if ($txt_all !== '') $output .= "    color: {$txt_all} !important;\n";
     $output .= "    text-align: left;\n";
     $output .= "    font-size: 1.1em;\n";
     $output .= "    margin-bottom: 0.7em;\n";
     $output .= "  }\n";
+    
   }
 
   $output .= "\n</style>\n";
@@ -219,14 +222,30 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   return $output;
 }
 
+function get_single_heading_html($key,$value,$add_bottom_margin) {
+  
+  if ($add_bottom_margin) { 
+    $add_bottom_margin_html = " margin-bottom:10px; ";
+  }
+  else { $add_bottom_margin_html = ""; }
+  
+  $output .= <<<HTML
+  <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks; $add_bottom_margin_html ">{$value}</span>
+  HTML;
+  
+  return $output;
+}
+
 function get_schedule_header($headings) {
 
     $output = '';
+
+   // <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
+
+    
     foreach ($headings as $key => $value) {
         if ($key !== 'track-all') {
-            $output .= <<<HTML
-            <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
-            HTML;
+          $output .= get_single_heading_html($key,$value,false);
         }
     }
     // Return the HTML to be rendered 
@@ -304,13 +323,11 @@ if ($data instanceof WP_Query && $data->have_posts()) {
   else {
       echo "No posts found or query failed.";
   }
-  
+
   foreach ($unique_tracks as $slug => $track_name) {
-  
     // Get the background colour of the track - using the slug
     
-  
-    if ($slug != "all-tracks") {
+    //if ($slug != "all-tracks") {
       $key = array_search($slug, $inputs['trackslugs']);
       if ($key !== false) {
         $headings['track-' . $key] = $track_name;
@@ -318,16 +335,20 @@ if ($data instanceof WP_Query && $data->have_posts()) {
         $track_background_colour['track-' . $key] = $track_background_colour[$slug];
         $track_text_colour['track-' . $key] =       $track_text_colour[$slug];
       }
-    }
-    else {
-      $headings['track-all'] = $track_name;
-      $track_background_colour['track-all'] = $track_background_colour[$slug];
-      $track_text_colour['track-all'] =       $track_text_colour[$slug];
-    }
+      else {
+        $key = "all";
+        // Here with all tracks - set the all tracks colours
+        $headings['track-' . $key] = $track_name;
+        // Set the colours - going to keep the slugs and colours in addition to the track-n as we might need later.
+        // We're setting both the slug for all tracks and track-all. Might not need this but it was driving me mad so kept it in.
+        $track_background_colour['track-' . $key] = $track_background_colour[$slug];
+        $track_text_colour['track-' . $key] =       $track_text_colour[$slug];
+        $track_background_colour['track-all'] = $track_background_colour[$slug];
+        $track_text_colour['track-all'] =       $track_text_colour[$slug];
+                
+      }
+    //}
   }
-  
-  $headings['track-all'] = 'All Tracks';
-  
   return array(
     'headings' => $headings,
     'track_background_colour' => $track_background_colour,
@@ -339,56 +360,39 @@ if ($data instanceof WP_Query && $data->have_posts()) {
 function get_args ($inputs) {
 
   $day = $inputs['day']; // This should be the date entered by the user in YYYY-MM-DD format
-  print_r($inputs); // Debugging line to check the inputs
 
-  	// get only sessions with session-start meta value a match to the date entered YYYY-MM-DD format
-
-// dsplay all tracks only
-
-
-/*
-    [trackslugs] => Array
-        (
-            [1] => pre-construction-hurdles
-            [2] => optimisation
-            [3] => 2025-d1-investor
-            [4] => 
-            [5] => 
-            [6] => 
-            [7] => 
-            [8] => 
-        )
-
-    [all-tracks] => allcolumns
-*/
-
-// Collect non-empty track slugs
-$track_terms = array_filter($inputs['trackslugs']);
-
-$args = array(
-    'post_type' => 'seminars',
-    'posts_per_page' => -1,
-    'meta_key' => 'time_start',
-    'orderby' => 'meta_value',
-    'order' => 'ASC',
-    'tax_query' => array(
-        'relation' => 'AND',
-        array(
-            'taxonomy' => 'date',
-            'field' => 'slug',
-            'terms' => $day,
-        ),
-        // Only add the track taxonomy filter if there are tracks selected
-        !empty($track_terms) ? array(
-            'taxonomy' => 'track',
-            'field' => 'slug',
-            'terms' => $track_terms,
-        ) : null,
-    ),
-);
-
-// Remove null values from tax_query (in case no tracks are selected)
-$args['tax_query'] = array_values(array_filter($args['tax_query']));
+  // Collect non-empty track slugs
+  $track_terms = array_filter($inputs['trackslugs']);
+  
+  // Check if "all-tracks" is selected and remove filtering
+  if ($inputs['all-tracks'] != '') {
+      $track_terms[] = $inputs['all-tracks'];
+  }
+  
+  $args = array(
+      'post_type' => 'seminars',
+      'posts_per_page' => -1,
+      'meta_key' => 'time_start',
+      'orderby' => 'meta_value',
+      'order' => 'ASC',
+      'tax_query' => array(
+          'relation' => 'AND',
+          array(
+              'taxonomy' => 'date',
+              'field' => 'slug',
+              'terms' => $day,
+          ),
+          // Only add the track taxonomy filter if there are tracks selected
+          !empty($track_terms) ? array(
+              'taxonomy' => 'track',
+              'field' => 'slug',
+              'terms' => $track_terms,
+          ) : null,
+      ),
+  );
+  
+  // Remove null values from tax_query (in case no tracks are selected)
+  $args['tax_query'] = array_values(array_filter($args['tax_query']));
 
 
   return $args;
@@ -563,7 +567,7 @@ function get_speaker_block_html ($postid, $track) {
     // Only display the role column if there are speakers
     if (!empty($speakers)) {
       $output .= '<div class="role-column" style="flex: 1">';
-      $output .= '<h3 class="speaker-role-title">' . esc_html($role->post_title) . '</h3>';
+      $output .= '<h4 class="speaker-role-title">' . esc_html($role->post_title) . '</h4>';
 
       foreach ($speakers as $speaker_post) {
         if (empty($speaker_post) || !is_numeric($speaker_post->ID)) {
@@ -657,67 +661,66 @@ function get_speaker_block_html ($postid, $track) {
   return $output;
 }
 
+function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading) {
 
-
-function display_one_session ($sessions, $rowID) {
-
-
-  //echo "RowID: " . $rowID . "<br>"; 
-  //echo "SessionID: " . $sessions[$rowID]['sessionID'] . "<br>";
-
+  // set a border class. at the moment I'm only using in tracks. Might need it in all-tracks too
+  if ($inputs['border'] === "yes") {
+      $border = "border-" . $sessions[$rowID]['trackID'];
+  }
+  
   $session_id = str_replace('session-', '', $sessions[$rowID]['sessionID']);
 
   // Check if the session is a special case
-    $type_html = make_themes_types_html($session_id);
-    $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
-    $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
-    $ALL_TRACKS_CONTENT_LENGTH = 20;
-    $full_content = strip_tags($post_content);
-    if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
-      $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
-      $modal_id = 'modal-' . $session_id;
-      $post_content = $short_content . ' <a href="#" class="more-details-link" data-modal="' . $modal_id . '">More details</a>';
-      // Modal HTML (hidden by default)
-      $post_content .= '
-      <div id="' . $modal_id . '" class="modal" style="display:none;">
-        <div class="modal-content">
-          <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
-          <div class="modal-body" style="margin: 20px;">' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
-        </div>
+  $type_html = make_themes_types_html($session_id);
+  $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
+  $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
+  $ALL_TRACKS_CONTENT_LENGTH = 20;
+  $full_content = strip_tags($post_content);
+  if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
+    $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
+    $modal_id = 'modal-' . $session_id;
+    $post_content = $short_content . ' <a href="#" class="more-details-link" data-modal="' . $modal_id . '">More details</a>';
+    // Modal HTML (hidden by default)
+    $post_content .= '
+    <div id="' . $modal_id . '" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
+        <div class="modal-body" style="margin: 20px;">' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
       </div>
-      <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        var link = document.querySelector(\'a.more-details-link[data-modal="' . $modal_id . '"]\');
-        var modal = document.getElementById("' . $modal_id . '");
-        var close = modal ? modal.querySelector(".close-modal") : null;
-        if(link && modal && close) {
-          link.addEventListener("click", function(e) {
-        e.preventDefault();
-        modal.style.display = "block";
-          });
-          close.addEventListener("click", function(e) {
-        e.preventDefault();
+    </div>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var link = document.querySelector(\'a.more-details-link[data-modal="' . $modal_id . '"]\');
+      var modal = document.getElementById("' . $modal_id . '");
+      var close = modal ? modal.querySelector(".close-modal") : null;
+      if(link && modal && close) {
+        link.addEventListener("click", function(e) {
+      e.preventDefault();
+      modal.style.display = "block";
+        });
+        close.addEventListener("click", function(e) {
+      e.preventDefault();
+      modal.style.display = "none";
+        });
+        window.addEventListener("click", function(event) {
+      if(event.target === modal) {
         modal.style.display = "none";
-          });
-          window.addEventListener("click", function(event) {
-        if(event.target === modal) {
-          modal.style.display = "none";
-        }
-          });
-        }
-      });
-      </script>
-      ';
-    }
+      }
+        });
+      }
+    });
+    </script>
+    ';
+  }
 
-    // This is a special case for the all-tracks session
-    // We need to display the session details in a different format
-    // For now, we will return an empty array
+  // This is a special case for the all-tracks session
+  // We need to display the session details in a different format
+  // For now, we will return an empty array
 
-    $speaker_html = get_speaker_block_html($session_id, $sessions[$rowID]['trackID']);
-    if (empty($speaker_html)) {
-     // $speaker_html = '<span class="session-presenter">No speakers</span>';
-    }
+  $speaker_html = get_speaker_block_html($session_id, $sessions[$rowID]['trackID']);
+  if (empty($speaker_html)) {
+   // $speaker_html = '<span class="session-presenter">No speakers</span>';
+  }
 
   if (!empty($full_content)) {
     $details_link = get_permalink($session_id);
@@ -727,30 +730,38 @@ function display_one_session ($sessions, $rowID) {
   }
 
   if ($sessions[$rowID]['trackID'] == "track-all") {
-
-  $output = <<<HTML
-    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
-    <div class="banner">
+    $output = <<<HTML
+      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+      <div class="banner">
+          <h3 class="seminar-title">{$session_title_link}</h3>
           {$type_html}
-        <h3>{$session_title_link}</h3>
-        <div class="event-details">
-            <p><span class="icon">⏰</span> {$sessions[$rowID]['sessionTime']}</p>
-            <p>{$post_content}</p>
-        </div>
-
-      {$speaker_html}
-
-
-    </div>
-
-
-    </div>
-    HTML; 
+          <div class="event-details">
+              <p><span class="icon">⏰</span> {$sessions[$rowID]['sessionTime']}</p>
+              <p>{$post_content}</p>
+          </div>
+        {$speaker_html}
+      </div>
+      </div>
+      HTML; 
   }
   else {
+    
+    //$track_heading = <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
+    if ($display_heading) {
+      $track_number = $sessions[$rowID]['trackID'];
+      
+      $track_heading = get_single_heading_html($track_number,$headings[$track_number],true);
+      
+      //$track_heading = '<span class="track-slot 1" aria-hidden="true" style="grid-column: he; grid-row: tracks;">'.$headings[$track_number].'</span>';
+    }
+    
     $output = <<<HTML
-    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']};">
-      <h4 class="{$sessions[$rowID]['trackID']}">{$session_title_link}</h4>
+    
+    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']};">
+
+      {$track_heading }
+
+      <h3 class="seminar-title-track">{$session_title_link}</h3>
       <span class="session-time">{$sessions[$rowID]['sessionTime']}</span>
       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
       <span class="session-presenter">{$speaker_html}</span>
