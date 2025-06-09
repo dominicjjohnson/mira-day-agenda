@@ -23,7 +23,7 @@ return $rtn;
 
 function get_parameters($atts) {
     /* This function should return the parameters for the shortcode
-  outputs:
+  Params:
   day: the date of the conference used in the search
   debug: true or false
   track1: the slug of the first track
@@ -32,6 +32,7 @@ function get_parameters($atts) {
   track4: the slug of the fourth track
   all-tracks: the slug of the all-tracks track
   border: yes - add additional css classes to display the border and not the background colour
+  display_heading_bar: yes - display the bar at the top of the track columns. 
     */
 
 
