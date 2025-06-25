@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.7
+ * Version: 1.8.
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -15,6 +15,7 @@
  * Version 1.4. 2025-06-03 - Fixed bug with this track colour names
  * Version 1.5. 2025-06-04 - Changes to get right on solar
  * Version 1.7. 2005-06-09 - Fixed heading bar.  
+ * Version 1.8. 2005-06-25 - Added Param .  
  
  
  */
@@ -57,9 +58,12 @@ return $output;
 
 function display_grid ($sessions,$inputs,$headings) {
 
-  // Displat the headings at the top of the page - might need to be a param.
-  echo get_schedule_header($headings); // Display headings once
-
+  $display_heading_bar_page = false;
+  if ($display_heading_bar_page) {
+    // Display the headings at the top of the page - might need to be a param.
+    echo get_schedule_header($headings); // Display headings once
+  }
+  
   // Look to see if you are to display headings
   if ($inputs['display_heading_bar'] === "yes") {
       $display_headings_param = true;

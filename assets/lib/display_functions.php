@@ -737,13 +737,16 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
           <h3 class="seminar-title">{$session_title_link}</h3>
           {$type_html}
           <div class="event-details">
-              <p><span class="icon">⏰</span> {$sessions[$rowID]['sessionTime']}</p>
+              <p>{$sessions[$rowID]['sessionTime']}</p>
               <p>{$post_content}</p>
           </div>
         {$speaker_html}
       </div>
       </div>
       HTML; 
+      
+      // removed <span class="icon">⏰</span>
+      
   }
   else {
     

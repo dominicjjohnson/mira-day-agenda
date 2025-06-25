@@ -11,3 +11,4 @@ Grid of the sessions.
   all-tracks: the slug of the all-tracks track
   border: yes - add additional css classes to display the border and not the background colour
   display_heading_bar: yes - display the bar at the top of the track columns. 
+  display_heading_bar_page: no - display the bar at the top of the grid. Set to false by default. Not yet added to param list, not sure if needed.
