@@ -192,8 +192,8 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   }
 
   // Track-all
-  $bg_all = $track_background_colour['allcolumns'];
-  $txt_all = $track_text_colour['allcolumns'];
+  $bg_all =  $track_background_colour['allcolumns'] ?? '#ffffff'; // white fallback
+  $txt_all = $track_text_colour['allcolumns'] ?? '#000000';
   if ($bg_all !== '' || $txt_all !== '') {
     $output .= "  .track-all {\n";
     $output .= "    display: flex;\n";
