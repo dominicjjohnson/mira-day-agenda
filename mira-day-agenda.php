@@ -66,7 +66,10 @@ function display_grid ($sessions,$inputs,$headings) {
   
   // Look to see if you are to display headings
   if ($inputs['display_heading_bar'] === "yes") {
-      $display_headings_param = true;
+    $display_headings_param = true;
+  }
+  else {
+    $display_headings_param = false;
   }
   
   if ($display_headings_param) {

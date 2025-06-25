@@ -759,6 +759,9 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       //$track_heading = '<span class="track-slot 1" aria-hidden="true" style="grid-column: he; grid-row: tracks;">'.$headings[$track_number].'</span>';
     }
     
+    $track_heading = $track_heading ?? '';
+    $border = $border ?? '';
+    
     $output = <<<HTML
     
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']};">
