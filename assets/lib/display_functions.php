@@ -730,9 +730,17 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     $session_title_link = esc_html($sessions[$rowID]['sessionsTitle']);
   }
 
+//      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+
+
+    //  <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: track-1-start track-{$inputs['number_of_tracks']}-end; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+
+
   if ($sessions[$rowID]['trackID'] == "track-all") {
     $output = <<<HTML
-      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+    
+      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: track-1-start / track-{$inputs['number_of_tracks']}-end; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+
       <div class="banner">
           <h3 class="seminar-title">{$session_title_link}</h3>
           {$type_html}

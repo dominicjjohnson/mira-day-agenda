@@ -16,6 +16,7 @@
  * Version 1.5. 2025-06-04 - Changes to get right on solar
  * Version 1.7. 2005-06-09 - Fixed heading bar.  
  * Version 1.8. 2005-06-25 - Added Param .  
+ * Version 1.9. 2025-06-30 - Changes for the HCE demo with the data from Oxford Scientific
  
  
  */
