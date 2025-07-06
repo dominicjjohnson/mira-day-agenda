@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.8.
+ * Version: 1.9.
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -14,8 +14,29 @@
  * Version 1.3. 2025-06-03 - Fixed a bug in All Tracks
  * Version 1.4. 2025-06-03 - Fixed bug with this track colour names
  * Version 1.5. 2025-06-04 - Changes to get right on solar
- * Version 1.7. 2005-06-09 - Fixed heading bar.  
- * Version 1.8. 2005-06-25 - Added Param .  
+ * Version 1.7. 2025-06-09 - Fixed heading bar.  
+ * Version 1.8. 2025-06-25 - Added Param .  
+ * Version 1.9. 2025-07-03 - Added params:
+   - time_slot_side - true / false. True = display it
+   - show_end_time - true /false. True = display it
+   - Show_session duration - true /false. True = display it
+
+   
+   
+   1. if time_slot_side is False: Move the time next to the title & put a clock icon - add css class
+     If true - display on the right as now.
+     If false - set css rule grid-template-rows - remove the [times] 0em and set time-slot to display:none
+   2. Add css class to Border to set the border colour fill...
+   3. Check the font of the session titles
+   4. add icon to the session type
+   5. Colour. Set border or fill colour as per param. Also colour in the block around time:
+        If the session has a colour then use that.
+        If not display the track colour
+        If not display white
+   6. Round the corners of the borders and time blocks
+   7. Add switch to show details yes / no
+   8.  
+        
  
  
  */
@@ -133,6 +154,9 @@ function mira_agenda_grid_old_shortcode($atts) {
 
     $headings = $headings_data['headings'];
     $track_background_colour = $headings_data['track_background_colour'];
+    
+    print_r($track_background_colour);
+    
     $track_text_colour = $headings_data['track_text_colour'];
 
     // Get the session data - for a single day

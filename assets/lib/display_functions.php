@@ -36,23 +36,26 @@ function get_parameters($atts) {
     */
 
 
-  $atts = shortcode_atts([
-      'day'    => '',
-      'all-tracks' => '',
-      'border' => "",
-      'display_heading_bar' => "",
-      'track1' => '',
-      'track2' => '',
-      'track3' => '',
-      'track4' => '',
-      'track5' => '',
-      'track6' => '',
-      'track7' => '',
-      'track8' => ''
+$atts = shortcode_atts([
+        'day' => '',
+        'all-tracks' => '',
+        'border' => '',
+        'display_heading_bar' => '',
+        'track1' => '',
+        'track2' => '',
+        'track3' => '',
+        'track4' => '',
+        'track5' => '',
+        'track6' => '',
+        'track7' => '',
+        'track8' => '',
+        'time_slot_side' => 'false',
+        'show_end_time' => 'false',
+        'show_session_duration' => 'false'
   ], $atts);
-
+  
   // Extract values into individual variables
-  $day    = esc_html($atts['day'] ?? '');
+  $day = esc_html($atts['day'] ?? '');
   $alltracks = esc_html($atts['all-tracks'] ?? 'all-tracks');
   $track1 = esc_html($atts['track1'] ?? '');
   $track2 = esc_html($atts['track2'] ?? '');
@@ -64,6 +67,19 @@ function get_parameters($atts) {
   $track8 = esc_html($atts['track8'] ?? '');
   $border = esc_html($atts['border'] ?? '');
   $display_heading_bar = esc_html($atts['display_heading_bar'] ?? '');
+  
+  // New flags
+  $time_slot_side = filter_var($atts['time_slot_side'], FILTER_VALIDATE_BOOLEAN);
+  $show_end_time = filter_var($atts['show_end_time'], FILTER_VALIDATE_BOOLEAN);
+  $show_session_duration = filter_var($atts['show_session_duration'], FILTER_VALIDATE_BOOLEAN);
+
+  
+  // set some default values
+  $inputs['time_slot_side'] =  false;
+
+  $inputs['show_session_duration'] = false;
+
+
 
   $inputs = array();
 
@@ -83,10 +99,14 @@ function get_parameters($atts) {
           7 => $track7,
           8 => $track8,
       );
+      
       $inputs['all-tracks'] = $alltracks;
       $inputs['border'] = $border;
       $inputs['display_heading_bar'] = $display_heading_bar;
-
+      $inputs['time_slot_side'] = $time_slot_side;
+      $inputs['show_end_time'] = $show_end_time;
+      $inputs['show_session_duration'] = $show_session_duration;
+      
       $track_count = 0;
       foreach ($inputs['trackslugs'] as $slug) {
         if (!empty($slug)) {
@@ -103,6 +123,12 @@ function get_parameters($atts) {
 function get_css_slots ($time_slots, $track_background_colour, $track_text_colour,$inputs) {
     
   $output = "<style>\n";
+  
+  // Turn off display of times on the left hand side if flag set.
+  if (!$inputs['time_slot_side']) {
+    $output .= ".time-slot { display: none; } \n";
+  }
+  
   $output .= "\n  @media screen and (min-width:700px) {\n";
   $output .= "    .schedule {\n";
   $output .= "      display: grid;\n";
@@ -121,7 +147,14 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   }
 
   $output .= "      grid-template-columns:\n";
-  $output .= "        [times] 4em\n";
+  
+  if ($inputs['time_slot_side']) {
+    $output .= "        [times] 4em\n";
+  }
+  else {
+    $output .= "        [times] 0em\n";
+  }
+  
   $number_of_tracks = $inputs['number_of_tracks'];
   // Dynamically generate grid columns based on $number_of_tracks
   for ($i = 1; $i <= $number_of_tracks; $i++) {
@@ -194,10 +227,25 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   // Track-all
   $bg_all = $track_background_colour['allcolumns'];
   $txt_all = $track_text_colour['allcolumns'];
+  
+  
+  
+  
   if ($bg_all !== '' || $txt_all !== '') {
     $output .= "  .track-all {\n";
     $output .= "    display: flex;\n";
-    if ($bg_all !== '') $output .= "    background: {$bg_all};\n";
+    
+    // if the border is set to true set the border color. If false then set the bacgrund color.
+    if ( (!$inputs['border']) && ($bg_all !== '') ) {
+      $output .= "    background: {$bg_all};\n";
+    }
+    else {
+      $output .= " .bg_color_alltracks { border-color: {$bg_all}; }\n";
+    }
+    
+    
+    
+    
     if ($txt_all !== '') $output .= "    color: {$txt_all};\n";
     $output .= "    box-shadow: none;\n";
     $output .= "  }\n";
@@ -230,7 +278,7 @@ function get_single_heading_html($key,$value,$add_bottom_margin) {
   }
   else { $add_bottom_margin_html = ""; }
   
-  $output .= <<<HTML
+  $output = <<<HTML
   <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks; $add_bottom_margin_html ">{$value}</span>
   HTML;
   
@@ -504,8 +552,7 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
   return $sessions;
 }
 
-function make_themes_types_html($sessionID) {
-
+function make_themes_types_html($sessionID, $minutes, $show_end_time, $start_time, $end_time) {
 
   // This function should return the themes and types HTML
   // For now, we will return an empty array
@@ -517,6 +564,13 @@ function make_themes_types_html($sessionID) {
     foreach ($types as $typeObj) {
       $type .= "<span>".$typeObj->name . "</span>\n";
     }
+    if ($show_end_time) {
+      $type .= '<i class="fa-solid fa-clock"></i> ' . $start_time . ' - ' . $end_time;
+    }
+    else {
+      $type .= '<i class="fa-solid fa-clock"></i> ' . $minutes. "m";
+    }
+    
     $type .= "</div>";
   }
   return $type;  
@@ -665,14 +719,27 @@ function get_speaker_block_html ($postid, $track) {
 function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading) {
 
   // set a border class. at the moment I'm only using in tracks. Might need it in all-tracks too
+  $border = "";
   if ($inputs['border'] === "yes") {
       $border = "border-" . $sessions[$rowID]['trackID'];
   }
   
   $session_id = str_replace('session-', '', $sessions[$rowID]['sessionID']);
 
-  // Check if the session is a special case
-  $type_html = make_themes_types_html($session_id);
+  // if show_end_time then leave as it is.
+  $time_split = parse_session_time_details($sessions[$rowID]['sessionTime']);
+  
+  /*
+  echo "Start: {$parsed['start_time']}\n";
+  echo "End: {$parsed['end_time']}\n";
+  echo "Duration: {$parsed['duration_minutes']} minutes\n";
+  echo "Hour: {$parsed['hour']}\n";
+  echo "Month: {$parsed['month']}\n";
+  */
+
+  // Display Type and duration if show_end_time = false OR start end time if true
+  $type_html = make_themes_types_html($session_id, $time_split['duration_minutes'], $inputs['show_end_time'], $time_split['start_time'], $time_split['end_time']);
+  
   $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
   $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
   $ALL_TRACKS_CONTENT_LENGTH = 20;
@@ -733,15 +800,17 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   if ($sessions[$rowID]['trackID'] == "track-all") {
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
-      <div class="banner">
-          <h3 class="seminar-title">{$session_title_link}</h3>
+        <div class="banner">
+          <div class="title_time_display title_time_display_alltracks bg_color_alltracks">
+            <span class="time">{$time_split['start_time']}</span>
+            <span class="title">{$session_title_link}</span>
+          </div>
           {$type_html}
           <div class="event-details">
-              <p>{$sessions[$rowID]['sessionTime']}</p>
-              <p>{$post_content}</p>
+            <p>{$post_content}</p>
           </div>
-        {$speaker_html}
-      </div>
+          {$speaker_html}
+        </div>
       </div>
       HTML; 
       
@@ -751,6 +820,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   else {
     
     //$track_heading = <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
+    $track_heading ="";
     if ($display_heading) {
       $track_number = $sessions[$rowID]['trackID'];
       
@@ -763,10 +833,11 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']};">
 
-      {$track_heading }
-
-      <h3 class="seminar-title-track">{$session_title_link}</h3>
-      <span class="session-time">{$sessions[$rowID]['sessionTime']}</span>
+      {$track_heading}
+      <div class="title_time_display title_time_display_cols">
+        <span class="title">{$session_title_link}</span>
+        <span class="time"><i class="fa-solid fa-clock"></i> {$sessions[$rowID]['sessionTime']}</span>
+      </div>
       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
       <span class="session-presenter">{$speaker_html}</span>
     </div>
@@ -774,3 +845,26 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   }
   return $output;
 }
+
+function parse_session_time_details($timeRange) {
+    // Expecting format: "HH:MM - HH:MM"
+    list($start_time, $end_time) = array_map('trim', explode('-', $timeRange));
+
+    $start_dt = DateTime::createFromFormat('H:i', $start_time);
+    $end_dt = DateTime::createFromFormat('H:i', $end_time);
+
+    if ($end_dt < $start_dt) {
+        $end_dt->modify('+1 day');
+    }
+
+    $interval = $start_dt->diff($end_dt);
+    $duration_minutes = ($interval->h * 60) + $interval->i;
+
+    return [
+        'start_time' => $start_time,
+        'end_time' => $end_time,
+        'duration_minutes' => $duration_minutes
+    ];
+}
+
+

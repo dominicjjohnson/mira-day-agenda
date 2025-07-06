@@ -37,6 +37,45 @@
     grid-column: times;
   }
   
+  .title_time_display {
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75em 1.25em;
+    background-color: #f5f5f5;
+    border-left: 4px solid;
+    border-radius: 4px;
+    margin-bottom: 1em;
+    font-size: 1rem;
+    color: #222;
+  }
+
+  .title_time_display_alltracks {
+    display: flex;
+  }
+  .title_time_display_cols {
+    display: grid;
+  }
+  
+  .title_time_display .time {
+    flex-shrink: 0;
+    font-weight: 500;
+    font-size: 0.95rem;
+    color: #666;
+    margin-right: 1em;
+    white-space: nowrap;
+  }
+  
+  .title_time_display .title {
+    flex-grow: 1;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #111;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  
   .track-slot {
     display: none; /* hidden on small screens and browsers without grid support */
   }
@@ -130,7 +169,7 @@
 
   .session {
     padding: .5em;
-    border-radius: 2px;
+    border-radius: 5px;
 
   }
   
