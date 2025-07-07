@@ -570,7 +570,7 @@ function make_themes_types_html($sessionID, $minutes, $show_end_time, $start_tim
 
 }
 
-function get_speaker_block_html ($postid, $track) {
+function get_speaker_block_html ($postid, $track, $all_tracks) {
 
   $output = '';
   // This function should return the speaker block HTML
@@ -593,8 +593,10 @@ function get_speaker_block_html ($postid, $track) {
     return $output; // No roles found
   }
 
-  // Start a wrapper for all roles
-  $output .= '<div class="roles-grid">';
+  // Start a wrapper for all roles - only for all tracks, not for columns
+  if ($all_tracks) {
+    $output .= '<div class="roles-grid">';
+  }
 
   foreach( $roles as $roleslug ){
 
@@ -645,7 +647,7 @@ function get_speaker_block_html ($postid, $track) {
           $output .= '<br>' . esc_html($speaker_job);
         }
         if ($speaker_company) {
-          $output .= '<br>' . esc_html($speaker_company);
+          $output .= ', <i>' . esc_html($speaker_company) . "</i>";
         }
         $output .= '</p>';
         $output .= '</div>';
@@ -703,7 +705,11 @@ function get_speaker_block_html ($postid, $track) {
     // If no speakers, do not output the role column or title
   }
 
-  $output .= '</div>'; // Close roles-grid
+  if ($all_tracks) {
+    $output .= '</div>'; // Close roles-grid
+  }
+
+  
 
   return $output;
 }
@@ -734,12 +740,20 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   
   $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
   $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
-  $ALL_TRACKS_CONTENT_LENGTH = 20;
+  $ALL_TRACKS_CONTENT_LENGTH = 100;
   $full_content = strip_tags($post_content);
   if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
     $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
     $modal_id = 'modal-' . $session_id;
-    $post_content = $short_content . ' <a href="#" class="more-details-link" data-modal="' . $modal_id . '">More details</a>';
+    $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  Full Description</a>';
+    
+   /*
+   $post_content = $short_content . '<a href="details.html" class="info-link" target="_blank">
+      <i class="fas fa-info-circle" aria-hidden="true"></i>
+      <span class="sr-only">More details</span>
+    </a>';
+   */ 
+    
     // Modal HTML (hidden by default)
     $post_content .= '
     <div id="' . $modal_id . '" class="modal" style="display:none;">
@@ -777,7 +791,15 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   // We need to display the session details in a different format
   // For now, we will return an empty array
 
-  $speaker_html = get_speaker_block_html($session_id, $sessions[$rowID]['trackID']);
+  // Only display the speakers in a grid if it is all-tracks. Contsruct a variable to pass in and set a class
+  if ($sessions[$rowID]['trackID'] == "track-all") {
+    $all_tracks = true;
+  }
+  else {
+    $all_tracks = false;
+  }
+
+  $speaker_html = get_speaker_block_html($session_id, $sessions[$rowID]['trackID'], $all_tracks);
   if (empty($speaker_html)) {
    // $speaker_html = '<span class="session-presenter">No speakers</span>';
   }
@@ -821,16 +843,22 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       //$track_heading = '<span class="track-slot 1" aria-hidden="true" style="grid-column: he; grid-row: tracks;">'.$headings[$track_number].'</span>';
     }
     
+    // removed       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
+    
     $output = <<<HTML
     
-    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']};">
+    <div class="session {$sessions[$rowID]['sessionID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-radius: 5px; border-width: 1px;">
 
       {$track_heading}
       <div class="title_time_display title_time_display_cols">
+        <span class="time">{$time_split['start_time']}</span>
         <span class="title">{$session_title_link}</span>
-        <span class="time"><i class="fa-solid fa-clock"></i> {$sessions[$rowID]['sessionTime']}</span>
       </div>
-      <span class="session-track">{$sessions[$rowID]['trackString']}</span>
+
+      {$type_html}
+      <div class="event-details">
+        <p>{$post_content}</p>
+      </div>
       <span class="session-presenter">{$speaker_html}</span>
     </div>
     HTML;

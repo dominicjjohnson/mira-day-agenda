@@ -153,9 +153,7 @@ function mira_agenda_grid_old_shortcode($atts) {
 
     $headings = $headings_data['headings'];
     $track_background_colour = $headings_data['track_background_colour'];
-    
-    print_r($track_background_colour);
-    
+        
     $track_text_colour = $headings_data['track_text_colour'];
 
     // Get the session data - for a single day

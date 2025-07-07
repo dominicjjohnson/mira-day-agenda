@@ -22,3 +22,10 @@ Grid of the sessions.
    - show_end_time - true /false. True = display it
    - Show_session duration - true /false. True = display it
    - Border 
+   
+   
+  Options to add:
+  
+  Set 
+  $ALL_TRACKS_CONTENT_LENGTH = 100; 
+   

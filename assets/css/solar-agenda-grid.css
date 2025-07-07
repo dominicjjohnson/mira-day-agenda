@@ -157,7 +157,7 @@
 .speaker, .moderator-details {
     display: flex;
     align-items: center;
-    padding: 10px;
+    padding: 0px 10px 0px 10px;
 }
 
 .speaker img, .moderator-details img {
@@ -209,6 +209,7 @@
     text-align: center;
     padding:25px;
     font-size: 1.25em;
+    border-radius: 5px;
   }
     
   .track-all {
@@ -226,7 +227,7 @@
   }
   
   .speaker-role-title {
-    padding-top: 16px;
+    padding-top: 10px;
     font-size: 1em;
   }
   
@@ -267,7 +268,7 @@
  
  .roles-grid {
     display: flex;
-    gap: 2em;
+    gap: 0.25em;
 }
 
 .track-1 .roles-grid,
@@ -286,3 +287,6 @@
 .speaker {
     text-align: left !important; 
 }
+
+
+
