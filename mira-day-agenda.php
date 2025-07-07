@@ -34,7 +34,8 @@
         If not display white
    6. Round the corners of the borders and time blocks
    7. Add switch to show details yes / no
-   8.  
+   
+ * Version 1.11. 2025-07-07 - Changed for the solar media grid   
         
  
  
