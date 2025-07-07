@@ -79,8 +79,6 @@ $atts = shortcode_atts([
 
   $inputs['show_session_duration'] = false;
 
-
-
   $inputs = array();
 
   if (empty($day)) {
@@ -225,11 +223,8 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   }
 
   // Track-all
-  $bg_all = $track_background_colour['allcolumns'];
-  $txt_all = $track_text_colour['allcolumns'];
-  
-  
-  
+  $bg_all =  $track_background_colour['allcolumns'] ?? '#ffffff'; // white fallback
+  $txt_all = $track_text_colour['allcolumns'] ?? '#000000';
   
   if ($bg_all !== '' || $txt_all !== '') {
     $output .= "  .track-all {\n";
@@ -242,9 +237,6 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
     else {
       $output .= " .bg_color_alltracks { border-color: {$bg_all}; }\n";
     }
-    
-    
-    
     
     if ($txt_all !== '') $output .= "    color: {$txt_all};\n";
     $output .= "    box-shadow: none;\n";

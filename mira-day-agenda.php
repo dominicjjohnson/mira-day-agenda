@@ -16,13 +16,12 @@
  * Version 1.5. 2025-06-04 - Changes to get right on solar
  * Version 1.7. 2025-06-09 - Fixed heading bar.  
  * Version 1.8. 2025-06-25 - Added Param .  
- * Version 1.9. 2025-07-03 - Added params:
+ * Version 1.9. 2025-06-25 - HCE Header updates. I had to re-apply changes from version on GitHub. 
+ * Version 1.10. 2025-07-03 - Added params:
    - time_slot_side - true / false. True = display it
    - show_end_time - true /false. True = display it
    - Show_session duration - true /false. True = display it
 
-   
-   
    1. if time_slot_side is False: Move the time next to the title & put a clock icon - add css class
      If true - display on the right as now.
      If false - set css rule grid-template-rows - remove the [times] 0em and set time-slot to display:none

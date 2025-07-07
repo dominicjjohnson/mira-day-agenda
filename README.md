@@ -8,6 +8,10 @@ Grid of the sessions.
   track2: the slug of the second track
   track3: the slug of the third track
   track4: the slug of the fourth track
+  track5
+  track6
+  track7
+  track8
   all-tracks: the slug of the all-tracks track
   border: yes - add additional css classes to display the border and not the background colour. Default is fill
   display_heading_bar: yes - display the bar at the top of the track columns. 
