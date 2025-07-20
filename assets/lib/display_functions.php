@@ -33,6 +33,9 @@ function get_parameters($atts) {
   all-tracks: the slug of the all-tracks track
   border: yes - add additional css classes to display the border and not the background colour
   display_heading_bar: yes - display the bar at the top of the track columns. 
+  link_title_to_details: true then link to details page false / default link to the pop-up.
+  default_border_color: set to #dedede by default. Needs some work to be able to switch between set to track color  
+  
     */
 
 
@@ -51,7 +54,9 @@ $atts = shortcode_atts([
         'track8' => '',
         'time_slot_side' => 'false',
         'show_end_time' => 'false',
-        'show_session_duration' => 'false'
+        'show_session_duration' => 'false',
+        'link_title_to_details' => 'false',
+        'default_border_color' => '#dedede'
   ], $atts);
   
   // Extract values into individual variables
@@ -72,12 +77,14 @@ $atts = shortcode_atts([
   $time_slot_side = filter_var($atts['time_slot_side'], FILTER_VALIDATE_BOOLEAN);
   $show_end_time = filter_var($atts['show_end_time'], FILTER_VALIDATE_BOOLEAN);
   $show_session_duration = filter_var($atts['show_session_duration'], FILTER_VALIDATE_BOOLEAN);
-
+  $link_title_to_details = filter_var($atts['link_title_to_details'], FILTER_VALIDATE_BOOLEAN);
+  
+  $default_border_color = "#dddddd";
   
   // set some default values
   $inputs['time_slot_side'] =  false;
-
   $inputs['show_session_duration'] = false;
+  $inputs['link_title_to_details'] = false;
 
   $inputs = array();
 
@@ -104,7 +111,9 @@ $atts = shortcode_atts([
       $inputs['time_slot_side'] = $time_slot_side;
       $inputs['show_end_time'] = $show_end_time;
       $inputs['show_session_duration'] = $show_session_duration;
-      
+      $inputs['link_title_to_details'] = $link_title_to_details;
+      $inputs['default_border_color'] = $default_border_color;
+
       $track_count = 0;
       foreach ($inputs['trackslugs'] as $slug) {
         if (!empty($slug)) {
@@ -229,6 +238,7 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   if ($bg_all !== '' || $txt_all !== '') {
     $output .= "  .track-all {\n";
     $output .= "    display: flex;\n";
+    $output .= "    border-color: ".$inputs['default_border_color'].";\n";
     
     // if the border is set to true set the border color. If false then set the bacgrund color.
     if ( (!$inputs['border']) && ($bg_all !== '') ) {
@@ -612,11 +622,24 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
 
     $role = reset($role_posts);
     $speakers = miramedia_p2p_get_seminar_speakers_by_role( $postid, $roleslug );
+    
+    // Set the singluar, plural value depending on the number of speakers returned.
+    if ( count( $speakers ) > 1 ) {
+      $role_title = get_post_meta( $role->ID, 'plural', true );
+    }
+    else {
+      $role_title = get_post_meta( $role->ID, 'singluar', true );
+    }
+    
+    // Set a default
+    if ( $role_title == "" ) {
+      $role_title = esc_html($role->post_title);
+    }
 
     // Only display the role column if there are speakers
     if (!empty($speakers)) {
       $output .= '<div class="role-column" style="flex: 1">';
-      $output .= '<h4 class="speaker-role-title">' . esc_html($role->post_title) . '</h4>';
+      $output .= '<p class="speaker-role-title">' . $role_title . '</p>';
 
       foreach ($speakers as $speaker_post) {
         if (empty($speaker_post) || !is_numeric($speaker_post->ID)) {
@@ -726,65 +749,42 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
 
   // if show_end_time then leave as it is.
   $time_split = parse_session_time_details($sessions[$rowID]['sessionTime']);
-  
-  /*
-  echo "Start: {$parsed['start_time']}\n";
-  echo "End: {$parsed['end_time']}\n";
-  echo "Duration: {$parsed['duration_minutes']} minutes\n";
-  echo "Hour: {$parsed['hour']}\n";
-  echo "Month: {$parsed['month']}\n";
-  */
 
   // Display Type and duration if show_end_time = false OR start end time if true
   $type_html = make_themes_types_html($session_id, $time_split['duration_minutes'], $inputs['show_end_time'], $time_split['start_time'], $time_split['end_time']);
   
   $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
   $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
+
+  $link_on_title = "";
+
   $ALL_TRACKS_CONTENT_LENGTH = 100;
   $full_content = strip_tags($post_content);
   if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
+    
     $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
     $modal_id = 'modal-' . $session_id;
     $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  Full Description</a>';
     
-   /*
-   $post_content = $short_content . '<a href="details.html" class="info-link" target="_blank">
-      <i class="fas fa-info-circle" aria-hidden="true"></i>
-      <span class="sr-only">More details</span>
-    </a>';
-   */ 
+    /*
+      if link_title_to_details param is true then set $link_on_title to the details page
+      if not then link to the modal popup.
+    */
+    if (!$input['link_title_to_details']) {
+      $link_on_title = '<a href="#" class="more-details-link" data-modal="' . $modal_id . '">';
+    }   
     
     // Modal HTML (hidden by default)
-    $post_content .= '
-    <div id="' . $modal_id . '" class="modal" style="display:none;">
-      <div class="modal-content">
-        <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
-        <div class="modal-body" style="margin: 20px;">' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
-      </div>
-    </div>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      var link = document.querySelector(\'a.more-details-link[data-modal="' . $modal_id . '"]\');
-      var modal = document.getElementById("' . $modal_id . '");
-      var close = modal ? modal.querySelector(".close-modal") : null;
-      if(link && modal && close) {
-        link.addEventListener("click", function(e) {
-      e.preventDefault();
-      modal.style.display = "block";
-        });
-        close.addEventListener("click", function(e) {
-      e.preventDefault();
-      modal.style.display = "none";
-        });
-        window.addEventListener("click", function(event) {
-      if(event.target === modal) {
-        modal.style.display = "none";
-      }
-        });
-      }
-    });
-    </script>
-    ';
+  $post_content .= '
+      <div id="' . $modal_id . '" class="modal" style="display:none;">
+        <div class="modal-content">
+          <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
+          <div class="modal-body" style="margin: 20px;">
+          <span class="title"><b>'.esc_html($sessions[$rowID]['sessionsTitle']).'</b></span>
+          ' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
+        </div>
+      </div>';
+
   }
 
   // This is a special case for the all-tracks session
@@ -805,15 +805,20 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   }
 
   if (!empty($full_content)) {
-    $details_link = get_permalink($session_id);
-    $session_title_link = '<a href="' . esc_url($details_link) . '">' . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
+    if ($link_on_title == "") {
+      $details_link = get_permalink($session_id);
+      $session_title_link = '<a href="' . esc_url($details_link) . '">' . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
+    }
+    else {
+      $session_title_link = $link_on_title . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
+    }
   } else {
     $session_title_link = esc_html($sessions[$rowID]['sessionsTitle']);
   }
 
   if ($sessions[$rowID]['trackID'] == "track-all") {
     $output = <<<HTML
-      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']} border-color:{$inputs['default_border_color']};" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
         <div class="banner">
           <div class="title_time_display title_time_display_alltracks bg_color_alltracks">
             <span class="time">{$time_split['start_time']}</span>
@@ -847,18 +852,18 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     $output = <<<HTML
     
-    <div class="session {$sessions[$rowID]['sessionID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-radius: 5px; border-width: 1px;">
+    <div class="session {$sessions[$rowID]['sessionID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-radius: 5px; border-width: 1px; border-color:#dedede;">
 
       {$track_heading}
       <div class="title_time_display title_time_display_cols">
         <span class="time">{$time_split['start_time']}</span>
         <span class="title">{$session_title_link}</span>
       </div>
-
-      {$type_html}
       <div class="event-details">
         <p>{$post_content}</p>
       </div>
+      {$type_html}
+
       <span class="session-presenter">{$speaker_html}</span>
     </div>
     HTML;

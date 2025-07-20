@@ -54,6 +54,10 @@
   }
   .title_time_display_cols {
     display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+    align-items: start;
   }
   
   .title_time_display .time {
@@ -65,14 +69,21 @@
     white-space: nowrap;
   }
   
+  /* reduce the gap between time and the title. */
+  .title_time_display_cols .time {
+      margin-right: 0 !important;
+    }
+
+  
+  
   .title_time_display .title {
     flex-grow: 1;
     font-weight: 600;
     font-size: 1.05rem;
     color: #111;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    //overflow: hidden;
+    //text-overflow: ellipsis;
+    //white-space: nowrap;
   }
 
   
@@ -227,6 +238,7 @@
   }
   
   .speaker-role-title {
+    font-weight: 600;
     padding-top: 10px;
     font-size: 1em;
   }

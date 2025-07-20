@@ -16,6 +16,7 @@ Grid of the sessions.
   border: yes - add additional css classes to display the border and not the background colour. Default is fill
   display_heading_bar: yes - display the bar at the top of the track columns. 
   display_heading_bar_page: no - display the bar at the top of the grid. Set to false by default. Not yet added to param list, not sure if needed.
+  link_title_to_details: true then link to details page false / default link to the pop-up.
   
   NEW (3rd July 2025)
   - time_slot_side - true / false. True = display it
@@ -28,4 +29,6 @@ Grid of the sessions.
   
   Set 
   $ALL_TRACKS_CONTENT_LENGTH = 100; 
+  
+  
    

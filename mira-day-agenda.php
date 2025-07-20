@@ -35,7 +35,11 @@
    6. Round the corners of the borders and time blocks
    7. Add switch to show details yes / no
    
- * Version 1.11. 2025-07-07 - Changed for the solar media grid   
+ * Version 1.11. 2025-07-07 - Changed for the solar media grid  
+ 
+ * Version 1.12. 2025-07-18 - New changes, requested by David Solar in email 17-07-2025
+    1. Added a new parameter "link_title_to_details". If true then link to the details page. Default - link to popup."
+     
         
  
  
@@ -196,12 +200,12 @@ function mira_agenda_grid_old_enqueue_assets() {
   );
 
   // Enqueue the JS file
-  wp_enqueue_script(
-      'solar-agenda-grid-script', // Handle for the JS file
-      plugins_url( 'assets/js/solar-agenda-grid.js', __FILE__ ), // Path to the JS file
-      array('jquery'), // Dependencies (jQuery)
-      DEVMODE ? time() : '1.0', // Use time() as the version for cache-busting if DEVMODE is true
-      true // Load in the footer
+    wp_enqueue_script(
+      'solar-agenda-grid',
+      plugin_dir_url(__FILE__) . 'assets/js/solar-agenda-grid.js',
+      array(),
+      null,
+      true
   );
 }
 add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets' );
