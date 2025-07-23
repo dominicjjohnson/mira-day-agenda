@@ -29,6 +29,21 @@ Grid of the sessions.
   
   Set 
   $ALL_TRACKS_CONTENT_LENGTH = 100; 
+
+COLOURS:
+
+We have the following different colours:
+
+- Track header colours
+- Track border colours
+- Session border colour
+- Track header - solid or border
+- Session background - fill or border
+- Small band on title colour
+- 
+
+
+  
   
   
    
