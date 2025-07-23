@@ -190,11 +190,46 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   for ($i = 1; $i <= 7; $i++) {
     $bg = _safe_val($track_background_colour, "track-$i");
     $txt = _safe_val($track_text_colour, "track-$i");
+
     if ($bg !== '' || $txt !== '') {
       $output .= "  .track-{$i} {\n";
-      if ($bg !== '') $output .= "    background-color: {$bg};\n";
+      if ($bg !== ''){
+        $output .= "    background-color: {$bg};\n";
+        $output .= "    border-color: {$bg};\n";
+      }
       if ($txt !== '') $output .= "    color: {$txt} !important;\n";
+      
       $output .= "  }\n";
+      
+      // setup the border colour - same as track: track-n-border
+      $output .= "  .track-{$i}-border {\n";
+      if ($bg !== ''){
+        $output .= "    border-color: {$bg};\n";
+      }
+      else {
+        $output .= "    border-color: #dedede;\n";
+      }
+      $output .= "  }\n";     
+      
+      // Setup the track headings
+      $output .= "  .track-{$i}-slot {\n";
+      if ($bg !== ''){
+        $output .= "    background-color: {$bg};\n";
+      }
+      else {
+        $output .= "    background-color: #dedede;\n";
+      }
+
+      if ($txt !== ''){
+        $output .= "    color: {$txt};\n";
+      } 
+      else {
+        $output .= "    color: #000000;\n";
+      }
+
+      $output .= "  }\n";        
+      
+      
       // Set the text color in the a. Used to be background too
       $output .= "  .track-{$i} a {\n";
       if ($txt !== '') $output .= "    color: {$txt} !important;\n";
@@ -281,7 +316,7 @@ function get_single_heading_html($key,$value,$add_bottom_margin) {
   else { $add_bottom_margin_html = ""; }
   
   $output = <<<HTML
-  <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks; $add_bottom_margin_html ">{$value}</span>
+  <span class="track-slot {$key}-slot" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks; $add_bottom_margin_html ">{$value}</span>
   HTML;
   
   return $output;
@@ -356,6 +391,28 @@ if ($data instanceof WP_Query && $data->have_posts()) {
                 }
                 
             }
+            
+            if (!isset($track_text_colour[$track->slug])) {
+                $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
+                if (empty($track_text_colour[$track->slug])) {
+                  $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'color', true);
+                  if (empty($track_text_colour[$track->slug])) { 
+                     $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'highlight_color', true);
+                   }
+                }
+                
+            }
+            
+            
+            
+            
+/*
+?? Need to work out what to do here as we have 2 ways to define the colour. Get it working for solar and see.
+
+
+echo "xxx3".get_term_meta($track->term_id, 'text_color', true)."\n";
+
+
             if (!isset($track_text_colour[$track->slug])) {
               $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
             }
@@ -366,6 +423,10 @@ if ($data instanceof WP_Query && $data->have_posts()) {
             } else {
                 $track_text_colour[$track->slug] = '#000000'; // Black text otherwise
             }
+            
+*/            
+            
+            
           }
         }
       }
@@ -740,8 +801,8 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
 function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading) {
 
   // set a border class. at the moment I'm only using in tracks. Might need it in all-tracks too
-  $border = "";
-  if ($inputs['border'] === "yes") {
+  $border = "yes";
+  if ($inputs['border'] == "yes") {
       $border = "border-" . $sessions[$rowID]['trackID'];
   }
   
@@ -818,7 +879,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
 
   if ($sessions[$rowID]['trackID'] == "track-all") {
     $output = <<<HTML
-      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']} border-color:{$inputs['default_border_color']};" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
+      <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
         <div class="banner">
           <div class="title_time_display title_time_display_alltracks bg_color_alltracks">
             <span class="time">{$time_split['start_time']}</span>
@@ -852,7 +913,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     $output = <<<HTML
     
-    <div class="session {$sessions[$rowID]['sessionID']} $border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-radius: 5px; border-width: 1px; border-color:#dedede;">
+    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['gridColumn']}-border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-radius: 5px; border-width: 1px;">
 
       {$track_heading}
       <div class="title_time_display title_time_display_cols">

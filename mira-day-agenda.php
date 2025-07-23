@@ -155,7 +155,7 @@ function mira_agenda_grid_old_shortcode($atts) {
 
     $data = $result['data'];
     $headings_data = get_headings($data, $inputs);
-
+    
     $headings = $headings_data['headings'];
     $track_background_colour = $headings_data['track_background_colour'];
         
