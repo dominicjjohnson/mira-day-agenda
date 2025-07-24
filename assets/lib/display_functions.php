@@ -409,7 +409,8 @@ if ($data instanceof WP_Query && $data->have_posts()) {
             
             // look to see if using field track_text_colour
             $track_text_colour_in = get_term_meta($track->term_id, 'track_text_colour', true);
-            if (isset($track_text_colour_in)) {
+                        
+            if (isset($track_text_colour_in) && !empty($track_text_colour_in)) {
               if ($track_text_colour_in == "lighttext") {
                 $track_text_colour[$track->slug] = "#ffffff";
               } else {
