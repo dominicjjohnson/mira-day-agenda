@@ -43,7 +43,8 @@ $atts = shortcode_atts([
         'day' => '',
         'all-tracks' => '',
         'border' => '',
-        'display_heading_bar' => '',
+        'display_heading_bar' => false,
+        'display_heading_bar_page' => false,
         'track1' => '',
         'track2' => '',
         'track3' => '',
@@ -52,10 +53,10 @@ $atts = shortcode_atts([
         'track6' => '',
         'track7' => '',
         'track8' => '',
-        'time_slot_side' => 'false',
-        'show_end_time' => 'false',
-        'show_session_duration' => 'false',
-        'link_title_to_details' => 'false',
+        'time_slot_side' => false,
+        'show_end_time' => false,
+        'show_session_duration' => false,
+        'link_title_to_details' => false,
         'default_border_color' => '#dedede'
   ], $atts);
   
@@ -72,6 +73,7 @@ $atts = shortcode_atts([
   $track8 = esc_html($atts['track8'] ?? '');
   $border = esc_html($atts['border'] ?? '');
   $display_heading_bar = esc_html($atts['display_heading_bar'] ?? '');
+  $display_heading_bar_page = esc_html($atts['display_heading_bar_page'] ?? '');
   
   // New flags
   $time_slot_side = filter_var($atts['time_slot_side'], FILTER_VALIDATE_BOOLEAN);
@@ -83,7 +85,7 @@ $atts = shortcode_atts([
   
   // set some default values
   $inputs['time_slot_side'] =  false;
-  $inputs['show_session_duration'] = false;
+  $inputs['show_session_duration'] = true;
   $inputs['link_title_to_details'] = false;
 
   $inputs = array();
@@ -108,6 +110,7 @@ $atts = shortcode_atts([
       $inputs['all-tracks'] = $alltracks;
       $inputs['border'] = $border;
       $inputs['display_heading_bar'] = $display_heading_bar;
+      $inputs['display_heading_bar_page'] = $display_heading_bar_page;
       $inputs['time_slot_side'] = $time_slot_side;
       $inputs['show_end_time'] = $show_end_time;
       $inputs['show_session_duration'] = $show_session_duration;
@@ -392,18 +395,28 @@ if ($data instanceof WP_Query && $data->have_posts()) {
                 
             }
             
+            
+            // here we are either setting text_color or we have track_text_colour which is 
             if (!isset($track_text_colour[$track->slug])) {
-                $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
-                if (empty($track_text_colour[$track->slug])) {
-                  $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'color', true);
-                  if (empty($track_text_colour[$track->slug])) { 
-                     $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'highlight_color', true);
-                   }
-                }
-                
+              $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'text_color', true);
+              if (empty($track_text_colour[$track->slug])) {
+                $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'color', true);
+                if (empty($track_text_colour[$track->slug])) { 
+                  $track_text_colour[$track->slug] = get_term_meta($track->term_id, 'highlight_color', true);
+                 }
+              }   
             }
             
-            
+            // look to see if using field track_text_colour
+            $track_text_colour_in = get_term_meta($track->term_id, 'track_text_colour', true);
+            if (isset($track_text_colour_in)) {
+              if ($track_text_colour_in == "lighttext") {
+                $track_text_colour[$track->slug] = "#ffffff";
+              } else {
+                $track_text_colour[$track->slug] = "#000000";
+              }
+            }
+
             
             
 /*
@@ -738,7 +751,7 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         // Modal HTML (hidden by default)
         $output .= '
         <div id="' . esc_attr($modal_id) . '" class="speaker-modal" style="display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);">
-          <div style="background:#fff;max-width:350px;margin:10vh auto;padding:2em;position:relative;border-radius:8px;">
+          <div style="background:#fff;max-width:350px;margin:10vh auto;padding:2em;position:relative">
             <span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>
             <h4 style="margin-top:0;">' . esc_html($speaker_name) . '</h4>
             <p style="margin-bottom:0.7em;">' . esc_html($speaker_bio) . '</p>
@@ -799,6 +812,14 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
 }
 
 function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading) {
+
+  // Final check to make sure you are to display track headings. Shouldn't be needed but there is an issue with the logic.
+  
+  if ($inputs['display_heading_bar'] == "false") {
+    $display_heading = false;
+  }
+
+
 
   // set a border class. at the moment I'm only using in tracks. Might need it in all-tracks too
   $border = "yes";
@@ -913,7 +934,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     $output = <<<HTML
     
-    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['gridColumn']}-border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-radius: 5px; border-width: 1px;">
+    <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['gridColumn']}-border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-width: 1px;">
 
       {$track_heading}
       <div class="title_time_display title_time_display_cols">

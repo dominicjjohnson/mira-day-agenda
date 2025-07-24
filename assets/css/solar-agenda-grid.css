@@ -181,7 +181,7 @@
   .session {
     padding: .5em;
     border-radius: 5px;
-
+    border-style: solid;
   }
   
   .session-title,

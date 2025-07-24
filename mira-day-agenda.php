@@ -44,6 +44,10 @@
  
  
  */
+ 
+define('DEVMODE', true); // Set to false on production
+define('VERSION', "1.10"); // Set to false on production
+
 
  // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -82,19 +86,18 @@ return $output;
 
 
 function display_grid ($sessions,$inputs,$headings) {
-
-  $display_heading_bar_page = false;
+  
+  // this put the headings at the top of the page. We're removing this functionality for now. 
+    
+  $display_heading_bar_page = $inputs['display_heading_bar_page'];
   if ($display_heading_bar_page) {
     // Display the headings at the top of the page - might need to be a param.
     echo get_schedule_header($headings); // Display headings once
   }
   
   // Look to see if you are to display headings
-  if ($inputs['display_heading_bar'] === "yes") {
-      $display_headings_param = true;
-  }
-  
-  if ($display_headings_param) {
+    
+  if ($inputs['display_heading_bar']) {
     $lastTrackID = null;
     $display_headings = false;
     $seenTracks = []; // Track which IDs have been processed
@@ -109,8 +112,15 @@ function display_grid ($sessions,$inputs,$headings) {
         } 
         // Set display_headings to true for first occurrence of a new track after "track-all"
         elseif ($lastTrackID == "track-all" || !in_array($currentTrackID, $seenTracks)) {
+          // Check that 
+          if ($inputs['display_heading_bar']){
             $display_headings = true;
-            $seenTracks[] = $currentTrackID; // Mark track as seen
+          }
+          else {
+            $display_headings = false;
+
+          }
+          $seenTracks[] = $currentTrackID; // Mark track as seen
         } else {
             $display_headings = false; // Prevent re-display for already seen tracks
         }
@@ -191,11 +201,19 @@ function mira_agenda_grid_old_enqueue_assets() {
 
   // Only enqueue assets if DEVMODE is true
   // Enqueue the CSS file
+  
+  if (DEVMODE) {
+    $css_url = 'assets/css/solar-agenda-grid.css?'.time();
+  }
+  else {
+    $css_url = 'assets/css/solar-agenda-grid.css?'.VERSION;
+  }
+  
   wp_enqueue_style(
       'solar-agenda-grid-style', // Handle for the CSS file
-      plugins_url( 'assets/css/solar-agenda-grid.css', __FILE__ ), // Path to the CSS file
+      plugins_url( $css_url, __FILE__ ), // Path to the CSS file
       array(), // Dependencies (none)
-      DEVMODE ? time() : '1.0', // Use time() as the version for cache-busting if DEVMODE is true
+      DEVMODE ? time() : '2.0', // Use time() as the version for cache-busting if DEVMODE is true
       'all' // Media type
   );
 

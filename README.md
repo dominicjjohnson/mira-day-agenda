@@ -14,8 +14,8 @@ Grid of the sessions.
   track8
   all-tracks: the slug of the all-tracks track
   border: yes - add additional css classes to display the border and not the background colour. Default is fill
-  display_heading_bar: yes - display the bar at the top of the track columns. 
-  display_heading_bar_page: no - display the bar at the top of the grid. Set to false by default. Not yet added to param list, not sure if needed.
+  display_heading_bar: true/false - display the bar at the top of the track columns. Default: False 
+  display_heading_bar_page: true/false - display the bar at the top of the grid. Set to false by default. Not yet added to param list, not sure if needed. default to false
   link_title_to_details: true then link to details page false / default link to the pop-up.
   
   NEW (3rd July 2025)
@@ -41,6 +41,9 @@ We have the following different colours:
 - Session background - fill or border
 - Small band on title colour
 - 
+
+TODO:
+1. Start time not working. Duration etc.. needs de-bugging
 
 
   
