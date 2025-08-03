@@ -7,7 +7,10 @@ $time_slots = [];
 $rtn =[];
 if ( !empty($data->posts) ) {
   foreach ( $data->posts as $post ) {
-    $time_slots = get_unique_start_and_end_times($post, $time_slots);
+    // Ensure $post is an object with ID property before passing to function
+    if (is_object($post) && isset($post->ID)) {
+      $time_slots = get_unique_start_and_end_times($post, $time_slots);
+    }
   }
 }
 // order the time slots
@@ -130,6 +133,10 @@ $atts = shortcode_atts([
     
 } // End Functions
 
+function _safe_val($arr, $key, $default = '') {
+  return isset($arr[$key]) && $arr[$key] !== '' ? $arr[$key] : $default;
+}
+
 function get_css_slots ($time_slots, $track_background_colour, $track_text_colour,$inputs) {
     
   $output = "<style>\n";
@@ -184,11 +191,6 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   $output .= "   * Design-y stuff ot particularly important to the demo\n";
   $output .= "   *************************/\n";
   $output .= "  \n";
-
-  // Helper for safe value
-  function _safe_val($arr, $key, $default = '') {
-    return isset($arr[$key]) && $arr[$key] !== '' ? $arr[$key] : $default;
-  }
 
   for ($i = 1; $i <= 7; $i++) {
     $bg = _safe_val($track_background_colour, "track-$i");
@@ -304,6 +306,27 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
     $output .= "    margin-bottom: 0.7em;\n";
     $output .= "  }\n";
     
+  }
+
+  // Add conditional CSS for when there are more than 4 tracks
+  if ($number_of_tracks > 4) {
+    $output .= "  /* Layout adjustment for more than 4 tracks - stack time above title */\n";
+    $output .= "  .title_time_display_cols {\n";
+    $output .= "    display: grid;\n";
+    $output .= "    grid-template-columns: 1fr;\n";
+    $output .= "    grid-template-rows: auto auto;\n";
+    $output .= "    align-items: start;\n";
+    $output .= "    gap: 2px;\n";
+    $output .= "  }\n";
+    $output .= "  .title_time_display_cols .time {\n";
+    $output .= "    grid-row: 1;\n";
+    $output .= "    margin-bottom: 0;\n";
+    $output .= "    font-size: 0.85rem;\n";
+    $output .= "  }\n";
+    $output .= "  .title_time_display_cols .title {\n";
+    $output .= "    grid-row: 2;\n";
+    $output .= "    font-size: 0.95rem;\n";
+    $output .= "  }\n";
   }
 
   $output .= "\n</style>\n";
@@ -847,13 +870,13 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
     $modal_id = 'modal-' . $session_id;
-    $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  Full Description</a>';
+    $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  more....</a>';
     
     /*
       if link_title_to_details param is true then set $link_on_title to the details page
       if not then link to the modal popup.
     */
-    if (!$input['link_title_to_details']) {
+    if (!$inputs['link_title_to_details']) {
       $link_on_title = '<a href="#" class="more-details-link" data-modal="' . $modal_id . '">';
     }   
     
@@ -926,7 +949,10 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     if ($display_heading) {
       $track_number = $sessions[$rowID]['trackID'];
       
-      $track_heading = get_single_heading_html($track_number,$headings[$track_number],true);
+      // Check if the heading exists before accessing it
+      if (isset($headings[$track_number])) {
+        $track_heading = get_single_heading_html($track_number,$headings[$track_number],true);
+      }
       
       //$track_heading = '<span class="track-slot 1" aria-hidden="true" style="grid-column: he; grid-row: tracks;">'.$headings[$track_number].'</span>';
     }

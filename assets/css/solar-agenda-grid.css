@@ -74,53 +74,63 @@
       margin-right: 0 !important;
     }
 
-  
-  
   .title_time_display .title {
     flex-grow: 1;
     font-weight: 600;
     font-size: 1.05rem;
     color: #111;
-    //overflow: hidden;
-    //text-overflow: ellipsis;
-    //white-space: nowrap;
+    /* overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; */
+  }
+  .title_time_display .title a,
+  .title_time_display .title a:hover {
+    color: #000;
   }
 
-  
-  .track-slot {
-    display: none; /* hidden on small screens and browsers without grid support */
-  }
-  
-  @supports( display:grid ) {
-    @media screen and (min-width:700px) {
-      .track-slot {
-        display: block;
-        padding: 10px 5px 5px;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background-color: rgba(255,255,255,.9);
-      }
+.more-details-link {
+  color: #111111;
+}
+
+.more-details-link:hover {
+  color: #444444;
+  background-color: #f0f0f0;
+}
+
+.track-slot {
+  display: none; /* hidden on small screens and browsers without grid support */
+}
+
+@supports( display:grid ) {
+  @media screen and (min-width:700px) {
+    .track-slot {
+    display: block;
+    padding: 10px 5px 5px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: rgba(255,255,255,.9);
     }
   }
-  
-  /* Small-screen & fallback styles */
-  .session {
-    margin-bottom:  1em;
+}
+
+/* Small-screen & fallback styles */
+.session {
+  margin-bottom:  1em;
+}
+
+@supports( display:grid ) {
+  @media screen and (min-width: 700px) {
+    .session {
+    margin: 0;
+    } 
   }
-  
-  @supports( display:grid ) {
-    @media screen and (min-width: 700px) {
-      .session {
-        margin: 0;
-      } 
-    }
-  }
-  
-  /*************************
-   * VISUAL STYLES
-   * Design-y stuff ot particularly important to the demo
-   *************************/
+}
+
+/*************************
+ * VISUAL STYLES
+ * Design-y stuff ot particularly important to the demo
+ *************************/
 
 
 .banner {
