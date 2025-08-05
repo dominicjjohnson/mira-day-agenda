@@ -365,7 +365,7 @@ function get_schedule_header($headings) {
 
 }
 
-function add_session(&$sessions, $rowID, $sessionID, $trackID, $gridColumn, $gridRowStartTime, $gridRowEndTime, $sessionsTitle, $sessionTime, $trackString, $sessionPresenter) {
+function add_session(&$sessions, $rowID, $sessionID, $trackID, $gridColumn, $gridRowStartTime, $gridRowEndTime, $sessionsTitle, $sessionTime, $trackString, $sessionPresenter, $postContent = '', $postID = 0) {
     $sessions[$rowID] = array(
         'sessionID' => $sessionID,
         'trackID' => $trackID,
@@ -375,7 +375,9 @@ function add_session(&$sessions, $rowID, $sessionID, $trackID, $gridColumn, $gri
         'sessionsTitle' => $sessionsTitle,
         'sessionTime' => $sessionTime,
         'trackString' => $trackString,
-        'sessionPresenter' => $sessionPresenter
+        'sessionPresenter' => $sessionPresenter,
+        'postContent' => $postContent,
+        'postID' => $postID
     );
 }
 
@@ -604,7 +606,8 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
           get_post_meta(get_the_ID(), 'time_start', true) . ' - ' . get_post_meta(get_the_ID(), 'time_end', true),
           'Track: All Tracks',
           'Dom J',
-          apply_filters('the_content', get_post_field('post_content', get_the_ID()))
+          apply_filters('the_content', get_post_field('post_content', get_the_ID())),
+          get_the_ID()
         );
       } else {
         // here when the track is not all-tracks and needs to go into a column
@@ -636,7 +639,7 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
           $track_name,
           'Dom J',
           apply_filters('the_content', get_post_field('post_content', get_the_ID())),
-
+          get_the_ID()
         );
       }
       $i++;
@@ -835,7 +838,7 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
   return $output;
 }
 
-function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading) {
+function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading, $track_background_colour = array()) {
 
   // Final check to make sure you are to display track headings. Shouldn't be needed but there is an issue with the logic.
   
@@ -853,6 +856,19 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   
   $session_id = str_replace('session-', '', $sessions[$rowID]['sessionID']);
 
+  // Get seminar highlight color for dynamic border styling, with track color fallback
+  $seminar_highlight = get_post_meta($session_id, 'seminar_highlight', true);
+  $border_style = '';
+  if (!empty($seminar_highlight)) {
+    $border_style = "border-left-color: {$seminar_highlight} !important;";
+  } else {
+    // Fallback to track color if no seminar highlight is set
+    $track_id = $sessions[$rowID]['trackID'];
+    if (isset($track_background_colour[$track_id]) && !empty($track_background_colour[$track_id])) {
+      $border_style = "border-left-color: {$track_background_colour[$track_id]} !important;";
+    }
+  }
+
   // if show_end_time then leave as it is.
   $time_split = parse_session_time_details($sessions[$rowID]['sessionTime']);
 
@@ -866,11 +882,17 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
 
   $ALL_TRACKS_CONTENT_LENGTH = 100;
   $full_content = strip_tags($post_content);
-  if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
-    
-    $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
+  
+  // Check if there's meaningful content (more than just whitespace)
+  $meaningful_content = trim($full_content);
+  if (!empty($meaningful_content) && strlen($meaningful_content) > 0) {
     $modal_id = 'modal-' . $session_id;
-    $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  more....</a>';
+    
+    // For long content, truncate and add "more..." link
+    if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
+      $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
+      $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  more....</a>';
+    }
     
     /*
       if link_title_to_details param is true then set $link_on_title to the details page
@@ -880,17 +902,16 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       $link_on_title = '<a href="#" class="more-details-link" data-modal="' . $modal_id . '">';
     }   
     
-    // Modal HTML (hidden by default)
-  $post_content .= '
-      <div id="' . $modal_id . '" class="modal" style="display:none;">
-        <div class="modal-content">
-          <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
-          <div class="modal-body" style="margin: 20px;">
-          <span class="title"><b>'.esc_html($sessions[$rowID]['sessionsTitle']).'</b></span>
-          ' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
-        </div>
-      </div>';
-
+    // Modal HTML (hidden by default) - always create for meaningful content
+    $post_content .= '
+        <div id="' . $modal_id . '" class="modal" style="display:none;">
+          <div class="modal-content">
+            <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
+            <div class="modal-body" style="margin: 20px;">
+            <span class="title"><b>'.esc_html($sessions[$rowID]['sessionsTitle']).'</b></span>
+            ' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
+          </div>
+        </div>';
   }
 
   // This is a special case for the all-tracks session
@@ -910,13 +931,16 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
    // $speaker_html = '<span class="session-presenter">No speakers</span>';
   }
 
-  if (!empty($full_content)) {
-    if ($link_on_title == "") {
+  // Check if there's meaningful content and create appropriate title link
+  $meaningful_content = trim($full_content);
+  if (!empty($meaningful_content) && strlen($meaningful_content) > 0) {
+    if ($link_on_title != "") {
+      // Use popup link if available
+      $session_title_link = $link_on_title . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
+    } else {
+      // Fallback to permalink if link_title_to_details is true
       $details_link = get_permalink($session_id);
       $session_title_link = '<a href="' . esc_url($details_link) . '">' . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
-    }
-    else {
-      $session_title_link = $link_on_title . esc_html($sessions[$rowID]['sessionsTitle']) . '</a>';
     }
   } else {
     $session_title_link = esc_html($sessions[$rowID]['sessionsTitle']);
@@ -926,7 +950,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
         <div class="banner">
-          <div class="title_time_display title_time_display_alltracks bg_color_alltracks">
+          <div class="title_time_display title_time_display_alltracks bg_color_alltracks" style="{$border_style}">
             <span class="time">{$time_split['start_time']}</span>
             <span class="title">{$session_title_link}</span>
           </div>
@@ -964,7 +988,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['gridColumn']}-border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-width: 1px;">
 
       {$track_heading}
-      <div class="title_time_display title_time_display_cols">
+      <div class="title_time_display title_time_display_cols" style="{$border_style}">
         <span class="time">{$time_split['start_time']}</span>
         <span class="title">{$session_title_link}</span>
       </div>

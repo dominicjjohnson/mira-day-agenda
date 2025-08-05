@@ -85,7 +85,7 @@ return $output;
 }
 
 
-function display_grid ($sessions,$inputs,$headings) {
+function display_grid ($sessions,$inputs,$headings, $track_background_colour = array()) {
   
   // this put the headings at the top of the page. We're removing this functionality for now. 
     
@@ -125,7 +125,7 @@ function display_grid ($sessions,$inputs,$headings) {
             $display_headings = false; // Prevent re-display for already seen tracks
         }
     
-        echo display_one_session($sessions, $rowID, $inputs, $headings, $display_headings);
+        echo display_one_session($sessions, $rowID, $inputs, $headings, $display_headings, $track_background_colour);
     
         // Store last track ID for next iteration
         $lastTrackID = $currentTrackID;
@@ -134,7 +134,7 @@ function display_grid ($sessions,$inputs,$headings) {
   else {
     // do not display the headings
     foreach ($sessions as $rowID => $session) {
-        echo display_one_session($sessions, $rowID, $inputs, $headings,false);
+        echo display_one_session($sessions, $rowID, $inputs, $headings,false, $track_background_colour);
     }
   }
 }
@@ -182,7 +182,7 @@ function mira_agenda_grid_old_shortcode($atts) {
         
     echo print_times($time_slots);
 
-    echo display_grid($sessions,$inputs,$headings); 
+    echo display_grid($sessions,$inputs,$headings, $track_background_colour); 
         
     echo '</div>';
 
