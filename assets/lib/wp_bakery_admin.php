@@ -144,6 +144,79 @@ if (function_exists('vc_map')) {
     ));
 }
 
+// WPBakery element for Display My Diary
+if (function_exists('vc_map')) {
+    vc_map(array(
+        'name'     => 'Display My Diary',
+        'base'     => 'display-my-diary',
+        'category' => 'Content',
+        'description' => 'Display sessions saved in user\'s personal diary',
+        'params'   => array(
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Display Style',
+                'param_name'  => 'style',
+                'description' => 'Choose how to display the diary sessions.',
+                'value'       => array(
+                    'Grid Layout' => 'grid',
+                    'List Layout' => 'list',
+                    'Compact List' => 'compact',
+                ),
+                'std'         => 'grid',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Show Empty Message',
+                'param_name'  => 'show_empty_message',
+                'description' => 'Display a message when no sessions are in the diary.',
+                'value'       => array(
+                    'Yes' => 'yes',
+                    'No'  => 'no',
+                ),
+                'std'         => 'yes',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+            array(
+                'type'        => 'textfield',
+                'heading'     => 'Empty Message Text',
+                'param_name'  => 'empty_message',
+                'description' => 'Custom message when diary is empty (leave blank for default).',
+                'admin_label' => false,
+                'maxlength'   => 100,
+            ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Show Session Details',
+                'param_name'  => 'show_details',
+                'description' => 'Include session descriptions and speaker information.',
+                'value'       => array(
+                    'Yes' => 'yes',
+                    'No'  => 'no',
+                ),
+                'std'         => 'yes',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Show Remove Buttons',
+                'param_name'  => 'show_remove_buttons',
+                'description' => 'Include remove buttons for each session.',
+                'value'       => array(
+                    'Yes' => 'yes',
+                    'No'  => 'no',
+                ),
+                'std'         => 'yes',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+        ),
+    ));
+}
+
 
 add_action('wp_ajax_save_agenda_grid', 'save_agenda_grid');
 add_action('wp_ajax_nopriv_save_agenda_grid', 'save_agenda_grid');

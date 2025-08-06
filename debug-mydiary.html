@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyDiary Debug Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .debug-section { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button { padding: 8px 16px; margin: 5px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        pre { background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>MyDiary Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>1. Cookie Status</h3>
+        <p>Cookie Contents: <span id="cookie-status">Checking...</span></p>
+        <button onclick="setCookieTest()">Set Test Cookie</button>
+        <button onclick="clearCookie()">Clear Cookie</button>
+        <button onclick="checkCookie()">Refresh Cookie Status</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>2. JavaScript Function Tests</h3>
+        <p>MyDiary JS Loaded: <span id="js-status">Checking...</span></p>
+        <button onclick="testPopulateFunction()">Test populateMyDiary Function</button>
+        <div id="function-test-result"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>3. Display My Diary Shortcode Test</h3>
+        <p>Add this shortcode to a WordPress page or post to test:</p>
+        <pre>[display-my-diary]</pre>
+        <p>Or use the debug shortcode:</p>
+        <pre>[debug-my-diary]</pre>
+    </div>
+
+    <div class="debug-section">
+        <h3>4. Manual Diary Display Test</h3>
+        <div style="border: 2px dashed #ccc; padding: 20px; margin: 10px 0;">
+            <div class="my-diary-container my-diary-grid">
+                <div class="my-diary-empty" style="display: block;">
+                    <p class="empty-message">Your diary is empty. Add sessions from the agenda to see them here.</p>
+                </div>
+                <div class="my-diary-content" style="display: none;"></div>
+            </div>
+        </div>
+        <button onclick="manualTest()">Test Manual Population</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>5. AJAX Endpoint Test</h3>
+        <p>WordPress AJAX URL: <span id="ajax-url">Not set</span></p>
+        <button onclick="testAjaxEndpoint()">Test AJAX Endpoint</button>
+        <div id="ajax-test-result"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>6. Console Log</h3>
+        <p>Check browser console (F12) for detailed error messages.</p>
+        <button onclick="showConsoleInstructions()">Show Console Instructions</button>
+        <div id="console-instructions" style="display: none;">
+            <p><strong>To check console:</strong></p>
+            <ol>
+                <li>Press F12 to open Developer Tools</li>
+                <li>Click on "Console" tab</li>
+                <li>Look for any error messages in red</li>
+                <li>Run: <code>debugMyDiary()</code> to see diary contents</li>
+                <li>Run: <code>populateMyDiary({style: 'grid'})</code> to test function</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Set WordPress AJAX URL for testing (you may need to adjust this)
+        window.ajaxurl = '/wp-admin/admin-ajax.php';
+        document.getElementById('ajax-url').textContent = window.ajaxurl;
+
+        function checkCookie() {
+            const cookie = document.cookie.split(';').find(c => c.trim().startsWith('AddToDiary='));
+            const statusElement = document.getElementById('cookie-status');
+            
+            if (cookie) {
+                const value = cookie.split('=')[1];
+                try {
+                    const parsed = JSON.parse(value);
+                    statusElement.innerHTML = `<span class="success">Found: [${parsed.join(', ')}]</span>`;
+                } catch (e) {
+                    statusElement.innerHTML = `<span class="error">Found but invalid JSON: ${value}</span>`;
+                }
+            } else {
+                statusElement.innerHTML = '<span class="warning">No AddToDiary cookie found</span>';
+            }
+        }
+
+        function setCookieTest() {
+            const testData = ['123', '456', '789'];
+            document.cookie = `AddToDiary=${JSON.stringify(testData)}; path=/; max-age=${30 * 24 * 60 * 60}`;
+            alert('Test cookie set with IDs: ' + testData.join(', '));
+            checkCookie();
+        }
+
+        function clearCookie() {
+            document.cookie = 'AddToDiary=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            alert('Cookie cleared');
+            checkCookie();
+        }
+
+        function testPopulateFunction() {
+            const statusElement = document.getElementById('js-status');
+            const resultElement = document.getElementById('function-test-result');
+            
+            if (typeof populateMyDiary === 'function') {
+                statusElement.innerHTML = '<span class="success">✓ populateMyDiary function available</span>';
+                
+                try {
+                    populateMyDiary({
+                        style: 'grid',
+                        showDetails: true,
+                        showRemoveButtons: true,
+                        showEmptyMessage: true
+                    });
+                    resultElement.innerHTML = '<p class="success">Function called successfully. Check the manual test area above.</p>';
+                } catch (error) {
+                    resultElement.innerHTML = '<p class="error">Error calling function: ' + error.message + '</p>';
+                }
+            } else {
+                statusElement.innerHTML = '<span class="error">✗ populateMyDiary function not found</span>';
+                resultElement.innerHTML = '<p class="error">MyDiary JavaScript not loaded. Check if the plugin is active and assets are loading.</p>';
+            }
+        }
+
+        function manualTest() {
+            const container = document.querySelector('.my-diary-content');
+            const emptyDiv = document.querySelector('.my-diary-empty');
+            
+            // Simulate having diary items
+            const mockItems = ['123', '456'];
+            
+            if (emptyDiv) emptyDiv.style.display = 'none';
+            if (container) {
+                container.style.display = 'block';
+                container.innerHTML = `
+                    <div class="diary-day-group">
+                        <h3 class="diary-day-header">Test Day - August 6, 2025</h3>
+                        <div class="diary-day-sessions">
+                            <div class="diary-session">
+                                <div class="diary-session-header">
+                                    <div>
+                                        <span class="diary-session-time">09:00 - 10:00</span>
+                                        <span class="diary-session-track">Test Track</span>
+                                    </div>
+                                    <button class="diary-remove-btn">Remove</button>
+                                </div>
+                                <div class="diary-session-title">Test Session</div>
+                                <div class="diary-session-details">This is a test session to verify the display is working.</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function testAjaxEndpoint() {
+            const resultElement = document.getElementById('ajax-test-result');
+            resultElement.innerHTML = '<p>Testing AJAX endpoint...</p>';
+            
+            const testData = new FormData();
+            testData.append('action', 'get_diary_sessions');
+            testData.append('session_ids', JSON.stringify(['123', '456']));
+            
+            fetch(window.ajaxurl, {
+                method: 'POST',
+                body: testData
+            })
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    const json = JSON.parse(text);
+                    resultElement.innerHTML = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
+                } catch (e) {
+                    resultElement.innerHTML = '<p class="error">Response is not JSON:</p><pre>' + text + '</pre>';
+                }
+            })
+            .catch(error => {
+                resultElement.innerHTML = '<p class="error">AJAX Error: ' + error.message + '</p>';
+            });
+        }
+
+        function showConsoleInstructions() {
+            const instructions = document.getElementById('console-instructions');
+            instructions.style.display = instructions.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkCookie();
+            
+            // Test if MyDiary JS is loaded
+            setTimeout(() => {
+                const statusElement = document.getElementById('js-status');
+                if (typeof populateMyDiary === 'function') {
+                    statusElement.innerHTML = '<span class="success">✓ MyDiary JavaScript loaded</span>';
+                } else {
+                    statusElement.innerHTML = '<span class="error">✗ MyDiary JavaScript not loaded</span>';
+                }
+            }, 1000);
+        });
+    </script>
+
+    <!-- Include MyDiary CSS for proper styling -->
+    <style>
+        /* Copy the mydiary.css styles here for standalone testing */
+        .my-diary-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: inherit;
+        }
+
+        .my-diary-empty {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+        }
+
+        .my-diary-empty .empty-message {
+            font-size: 16px;
+            color: #666;
+            margin: 0;
+            font-style: italic;
+        }
+
+        .diary-day-group {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .diary-day-header {
+            background: linear-gradient(135deg, #007cba 0%, #005a87 100%);
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .diary-day-sessions {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .diary-session {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            background: #fff;
+            position: relative;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .diary-session:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .diary-session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .diary-session-time {
+            background: #f0f0f0;
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .diary-session-track {
+            background: #e8f4f8;
+            color: #007cba;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .diary-session-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .diary-session-details {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .diary-remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .diary-remove-btn:hover {
+            background: #c82333;
+        }
+    </style>
+</body>
+</html>

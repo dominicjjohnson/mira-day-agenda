@@ -2,6 +2,57 @@
  * MyDiary Button Styles for Mira Day Agenda
  */
 
+/* MyDiary Display Header */
+.my-diary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.my-diary-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.my-diary-refresh-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    color: #6c757d;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+}
+
+.my-diary-refresh-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+}
+
+.my-diary-refresh-btn:active {
+    background: #dee2e6;
+    transform: scale(0.95);
+}
+
+.my-diary-refresh-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.my-diary-refresh-btn:hover svg {
+    transform: rotate(180deg);
+}
+
 /* MyDiary Button Base Styles */
 .mydiary-btn {
     display: inline-block;
@@ -139,4 +190,244 @@
 .mydiary-btn {
     position: relative;
     overflow: hidden;
+}
+
+/**
+ * My Diary Display Styles
+ */
+
+/* Main container */
+.my-diary-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: inherit;
+}
+
+/* Empty state */
+.my-diary-empty {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 2px dashed #ddd;
+}
+
+.my-diary-empty .empty-message {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Day groupings */
+.diary-day-group {
+    margin-bottom: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.diary-day-header {
+    background: linear-gradient(135deg, #007cba 0%, #005a87 100%);
+    color: white;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.diary-day-sessions {
+    padding: 20px;
+}
+
+/* Grid layout */
+.my-diary-grid .diary-day-sessions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* List layout */
+.my-diary-list .diary-day-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Compact layout */
+.my-diary-compact .diary-day-sessions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Session cards */
+.diary-session {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    background: #fff;
+    position: relative;
+    transition: box-shadow 0.3s ease;
+}
+
+.diary-session:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.my-diary-compact .diary-session {
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* Session header */
+.diary-session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.diary-session-time {
+    background: #f0f0f0;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.diary-session-track {
+    background: #e8f4f8;
+    color: #007cba;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+/* Session title */
+.diary-session-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.my-diary-compact .diary-session-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+/* Session details */
+.diary-session-details {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.my-diary-compact .diary-session-details {
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+/* Session speakers */
+.diary-session-speakers {
+    font-size: 13px;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.my-diary-compact .diary-session-speakers {
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+/* Remove button */
+.diary-remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.diary-remove-btn:hover {
+    background: #c82333;
+}
+
+.my-diary-compact .diary-remove-btn {
+    position: static;
+    margin-top: 5px;
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+/* Loading state */
+.my-diary-loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Error state */
+.my-diary-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid #f5c6cb;
+    margin-bottom: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .my-diary-container {
+        padding: 10px;
+    }
+    
+    .my-diary-grid .diary-day-sessions {
+        grid-template-columns: 1fr;
+    }
+    
+    .diary-session-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .diary-remove-btn {
+        position: static;
+        margin-top: 10px;
+        align-self: flex-start;
+    }
+}
+
+/* Print styles */
+@media print {
+    .diary-remove-btn {
+        display: none;
+    }
+    
+    .my-diary-container {
+        box-shadow: none;
+    }
+    
+    .diary-session {
+        border: 1px solid #000;
+        break-inside: avoid;
+    }
 }

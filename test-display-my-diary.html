@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display My Diary - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .shortcode-demo {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            border-left: 4px solid #007cba;
+            margin: 10px 0;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        .controls button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding: 8px 16px;
+            background: #007cba;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background: #005a87;
+        }
+        .demo-section {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+    <!-- Include the MyDiary CSS -->
+    <link rel="stylesheet" href="assets/css/mydiary.css">
+</head>
+<body>
+    <h1>Display My Diary - Test Page</h1>
+    
+    <div class="test-container">
+        <h2>Shortcode Usage</h2>
+        <p>The <strong>[display-my-diary]</strong> shortcode displays sessions saved in the user's personal diary cookie.</p>
+        
+        <h3>Basic Usage</h3>
+        <div class="shortcode-demo">[display-my-diary]</div>
+        
+        <h3>With Parameters</h3>
+        <div class="shortcode-demo">[display-my-diary style="list" show_details="yes" show_remove_buttons="yes"]</div>
+        
+        <h3>Available Parameters</h3>
+        <ul>
+            <li><code>style</code> - Display layout: "grid", "list", or "compact" (default: "grid")</li>
+            <li><code>show_empty_message</code> - Show message when diary is empty: "yes" or "no" (default: "yes")</li>
+            <li><code>empty_message</code> - Custom empty message text</li>
+            <li><code>show_details</code> - Include session descriptions: "yes" or "no" (default: "yes")</li>
+            <li><code>show_remove_buttons</code> - Include remove buttons: "yes" or "no" (default: "yes")</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h2>Test Controls</h2>
+        <div class="controls">
+            <button onclick="addTestDiaryItems()">Add Test Diary Items</button>
+            <button onclick="clearDiary()">Clear Diary</button>
+            <button onclick="showDiaryContents()">Show Diary Contents</button>
+            <button onclick="simulateDiaryDisplay('grid')">Test Grid Layout</button>
+            <button onclick="simulateDiaryDisplay('list')">Test List Layout</button>
+            <button onclick="simulateDiaryDisplay('compact')">Test Compact Layout</button>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Grid Layout Demo</h2>
+        <div class="demo-section">
+            <div class="my-diary-container my-diary-grid">
+                <div id="grid-demo" class="my-diary-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>List Layout Demo</h2>
+        <div class="demo-section">
+            <div class="my-diary-container my-diary-list">
+                <div id="list-demo" class="my-diary-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Compact Layout Demo</h2>
+        <div class="demo-section">
+            <div class="my-diary-container my-diary-compact">
+                <div id="compact-demo" class="my-diary-content">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>WPBakery Element</h2>
+        <p>In WPBakery Page Builder, look for the <strong>"Display My Diary"</strong> element in the Content category.</p>
+        
+        <h3>Configuration Options</h3>
+        <ul>
+            <li><strong>Display Style:</strong> Choose between Grid, List, or Compact layout</li>
+            <li><strong>Show Empty Message:</strong> Display message when diary is empty</li>
+            <li><strong>Empty Message Text:</strong> Custom text for empty state</li>
+            <li><strong>Show Session Details:</strong> Include descriptions and speaker info</li>
+            <li><strong>Show Remove Buttons:</strong> Allow users to remove sessions from diary</li>
+        </ul>
+    </div>
+
+    <!-- Include the MyDiary JavaScript -->
+    <script src="assets/js/mydiary.js"></script>
+    
+    <!-- Test utility functions -->
+    <script>
+        // Simulate AJAX URL for testing
+        window.ajaxurl = '/wp-admin/admin-ajax.php';
+        
+        function addTestDiaryItems() {
+            const testItems = ['123', '456', '789'];
+            document.cookie = `AddToDiary=${JSON.stringify(testItems)}; path=/; max-age=${30 * 24 * 60 * 60}`;
+            alert('Added test diary items. Refresh the demos below.');
+        }
+
+        function clearDiary() {
+            document.cookie = 'AddToDiary=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            alert('Diary cleared. Refresh the demos below.');
+        }
+
+        function showDiaryContents() {
+            if (typeof debugMyDiary === 'function') {
+                debugMyDiary();
+            } else {
+                alert('MyDiary JavaScript not loaded');
+            }
+        }
+
+        function simulateDiaryDisplay(style) {
+            // Simulate diary data for testing
+            const mockSessions = [
+                {
+                    id: '123',
+                    title: 'Opening Keynote: Future of Technology',
+                    content: 'Join us for an inspiring keynote about emerging technologies and their impact on society.',
+                    time: '09:00 - 10:00',
+                    date: '2025-08-06',
+                    track: 'Main Stage',
+                    speakers: 'Dr. Jane Smith, Prof. John Doe'
+                },
+                {
+                    id: '456',
+                    title: 'AI in Healthcare Workshop',
+                    content: 'Hands-on workshop exploring practical applications of artificial intelligence in medical practice.',
+                    time: '10:30 - 12:00',
+                    date: '2025-08-06',
+                    track: 'Workshop Room A',
+                    speakers: 'Dr. Sarah Johnson'
+                },
+                {
+                    id: '789',
+                    title: 'Panel: Sustainable Energy Solutions',
+                    content: 'Expert panel discussing renewable energy technologies and implementation strategies.',
+                    time: '14:00 - 15:30',
+                    date: '2025-08-07',
+                    track: 'Conference Hall',
+                    speakers: 'Multiple Speakers'
+                }
+            ];
+
+            // Get the appropriate container
+            const containerId = style + '-demo';
+            const container = document.getElementById(containerId);
+            
+            if (container) {
+                // Simulate the render function
+                renderMockDiary(mockSessions, container, {
+                    style: style,
+                    showDetails: true,
+                    showRemoveButtons: true
+                });
+            }
+        }
+
+        function renderMockDiary(sessions, container, config) {
+            // Group by date
+            const sessionsByDate = {};
+            sessions.forEach(session => {
+                if (!sessionsByDate[session.date]) {
+                    sessionsByDate[session.date] = [];
+                }
+                sessionsByDate[session.date].push(session);
+            });
+
+            let html = '';
+            Object.keys(sessionsByDate).sort().forEach(date => {
+                const dateObj = new Date(date + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+
+                html += '<div class="diary-day-group">';
+                html += `<h3 class="diary-day-header">${formattedDate}</h3>`;
+                html += '<div class="diary-day-sessions">';
+
+                sessionsByDate[date].forEach(session => {
+                    html += `<div class="diary-session" data-session-id="${session.id}">`;
+                    html += '<div class="diary-session-header">';
+                    html += '<div>';
+                    html += `<span class="diary-session-time">${session.time}</span>`;
+                    html += `<span class="diary-session-track">${session.track}</span>`;
+                    html += '</div>';
+                    if (config.showRemoveButtons) {
+                        html += `<button class="diary-remove-btn" data-session-id="${session.id}">Remove</button>`;
+                    }
+                    html += '</div>';
+                    html += `<div class="diary-session-title">${session.title}</div>`;
+                    if (config.showDetails) {
+                        html += `<div class="diary-session-details">${session.content}</div>`;
+                        html += `<div class="diary-session-speakers">Speakers: ${session.speakers}</div>`;
+                    }
+                    html += '</div>';
+                });
+
+                html += '</div></div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Initialize demos on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add some test data to cookie for demo purposes
+            const testItems = ['123', '456', '789'];
+            document.cookie = `AddToDiary=${JSON.stringify(testItems)}; path=/; max-age=${30 * 24 * 60 * 60}`;
+            
+            // Populate all demo containers
+            setTimeout(() => {
+                simulateDiaryDisplay('grid');
+                simulateDiaryDisplay('list');
+                simulateDiaryDisplay('compact');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
