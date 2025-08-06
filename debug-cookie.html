@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MyDiary Cookie Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-info { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .button { background: #0073aa; color: white; padding: 10px 15px; border: none; border-radius: 3px; cursor: pointer; margin: 5px; }
+        .button:hover { background: #005a87; }
+        pre { background: #fff; padding: 10px; border: 1px solid #ddd; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>MyDiary Cookie Debug Tool</h1>
+    
+    <div class="debug-info">
+        <h3>Current Cookie Status</h3>
+        <p><strong>All Cookies:</strong> <span id="all-cookies"></span></p>
+        <p><strong>AddToDiary Cookie:</strong> <span id="diary-cookie"></span></p>
+        <p><strong>Parsed Diary Items:</strong> <span id="parsed-items"></span></p>
+    </div>
+
+    <div class="debug-info">
+        <h3>Test Actions</h3>
+        <button class="button" onclick="addTestSession()">Add Test Session (123)</button>
+        <button class="button" onclick="addTestSession2()">Add Test Session (456)</button>
+        <button class="button" onclick="clearCookie()">Clear Cookie</button>
+        <button class="button" onclick="refreshDisplay()">Refresh Display</button>
+    </div>
+
+    <div class="debug-info">
+        <h3>Test AJAX Call</h3>
+        <button class="button" onclick="testAjax()">Test WordPress AJAX</button>
+        <div id="ajax-result"></div>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        function getDiaryItems() {
+            let diary = getCookie('AddToDiary');
+            if (diary) {
+                try {
+                    return JSON.parse(diary);
+                } catch (e) {
+                    console.error('Error parsing cookie:', e);
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        function refreshDisplay() {
+            document.getElementById('all-cookies').textContent = document.cookie || 'No cookies found';
+            
+            let diaryCookie = getCookie('AddToDiary');
+            document.getElementById('diary-cookie').textContent = diaryCookie || 'No AddToDiary cookie found';
+            
+            let diaryItems = getDiaryItems();
+            document.getElementById('parsed-items').textContent = JSON.stringify(diaryItems);
+        }
+
+        function addTestSession() {
+            let items = getDiaryItems();
+            if (!items.includes('123')) {
+                items.push('123');
+            }
+            setCookie('AddToDiary', JSON.stringify(items), 30);
+            refreshDisplay();
+        }
+
+        function addTestSession2() {
+            let items = getDiaryItems();
+            if (!items.includes('456')) {
+                items.push('456');
+            }
+            setCookie('AddToDiary', JSON.stringify(items), 30);
+            refreshDisplay();
+        }
+
+        function clearCookie() {
+            document.cookie = "AddToDiary=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            refreshDisplay();
+        }
+
+        function testAjax() {
+            let diaryItems = getDiaryItems();
+            if (diaryItems.length === 0) {
+                diaryItems = ['123', '456']; // Use test IDs
+            }
+
+            let data = new FormData();
+            data.append('action', 'get_diary_sessions');
+            data.append('session_ids', JSON.stringify(diaryItems));
+
+            document.getElementById('ajax-result').innerHTML = 'Testing with IDs: ' + JSON.stringify(diaryItems) + '<br>Loading...';
+
+            fetch('/plug/wp-admin/admin-ajax.php', {
+                method: 'POST',
+                body: data
+            })
+            .then(response => response.json())
+            .then(result => {
+                document.getElementById('ajax-result').innerHTML = 
+                    '<strong>AJAX Response:</strong><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            })
+            .catch(error => {
+                document.getElementById('ajax-result').innerHTML = 
+                    '<strong>Error:</strong> ' + error.message;
+            });
+        }
+
+        // Initialize display
+        refreshDisplay();
+    </script>
+</body>
+</html>

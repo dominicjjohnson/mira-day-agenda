@@ -25,7 +25,7 @@ return $rtn;
 }
 
 /**
- * Generate MyDiary button HTML
+ * Generate MyDiary button HTML - Small round button with icons
  * @param int $seminar_id The ID of the seminar
  * @return string HTML for the MyDiary button
  */
@@ -34,14 +34,12 @@ function generate_mydiary_button($seminar_id) {
         return '';
     }
     
-    return '<div class="mydiary-container">
-        <button class="mydiary-btn mydiary-add" 
+    return '<button class="mydiary-btn mydiary-add" 
                 data-seminar-id="' . esc_attr($seminar_id) . '" 
                 type="button" 
                 title="Click to add to diary">
-            Add to MyDiary
-        </button>
-    </div>';
+                <span class="mydiary-icon">+</span>
+            </button>';
 }
 
 function get_parameters($atts) {
@@ -973,14 +971,13 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
         <div class="banner">
           <div class="title_time_display title_time_display_alltracks bg_color_alltracks" style="{$border_style}">
             <span class="time">{$time_split['start_time']}</span>
-            <span class="title">{$session_title_link}</span>
+            <span class="title">{$session_title_link}{$mydiary_button}</span>
           </div>
           {$type_html}
           <div class="event-details">
             <p>{$post_content}</p>
           </div>
           {$speaker_html}
-          {$mydiary_button}
         </div>
       </div>
       HTML; 
@@ -1013,7 +1010,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       {$track_heading}
       <div class="title_time_display title_time_display_cols" style="{$border_style}">
         <span class="time">{$time_split['start_time']}</span>
-        <span class="title">{$session_title_link}</span>
+        <span class="title">{$session_title_link}{$mydiary_button}</span>
       </div>
       <div class="event-details">
         <p>{$post_content}</p>
@@ -1021,7 +1018,6 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       {$type_html}
 
       <span class="session-presenter">{$speaker_html}</span>
-      {$mydiary_button}
     </div>
     HTML;
   }

@@ -30,14 +30,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get current diary items from cookie
     function getDiaryItems() {
         let diary = getCookie('AddToDiary');
+        console.log('getDiaryItems - Raw cookie value:', diary);
         if (diary) {
             try {
-                return JSON.parse(diary);
+                const parsed = JSON.parse(diary);
+                console.log('getDiaryItems - Parsed cookie:', parsed);
+                return parsed;
             } catch (e) {
-                console.warn('Invalid diary cookie format, resetting');
+                console.warn('Invalid diary cookie format, resetting. Error:', e);
+                console.warn('Problematic cookie value:', diary);
                 return [];
             }
         }
+        console.log('getDiaryItems - No cookie found, returning empty array');
         return [];
     }
 
@@ -67,19 +72,24 @@ document.addEventListener('DOMContentLoaded', function() {
         updateButtonState(seminarId, false);
     }
 
-    // Update button appearance and text
+    // Update button appearance and icon
     function updateButtonState(seminarId, inDiary) {
         let button = document.querySelector('.mydiary-btn[data-seminar-id="' + seminarId + '"]');
         if (button) {
+            let icon = button.querySelector('.mydiary-icon');
             if (inDiary) {
                 button.classList.remove('mydiary-add');
                 button.classList.add('mydiary-in-diary');
-                button.textContent = 'In Diary';
+                if (icon) {
+                    icon.textContent = '−'; // Use minus symbol (Unicode U+2212)
+                }
                 button.setAttribute('title', 'Click to remove from diary');
             } else {
                 button.classList.remove('mydiary-in-diary');
                 button.classList.add('mydiary-add');
-                button.textContent = 'Add to MyDiary';
+                if (icon) {
+                    icon.textContent = '+';
+                }
                 button.setAttribute('title', 'Click to add to diary');
             }
         }
@@ -102,7 +112,17 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
         event.stopPropagation();
         
+        // Find the button element (could be clicked on button or its child span)
         let button = event.target;
+        if (!button.classList.contains('mydiary-btn')) {
+            button = button.closest('.mydiary-btn');
+        }
+        
+        if (!button) {
+            console.warn('No MyDiary button found');
+            return;
+        }
+        
         let seminarId = button.getAttribute('data-seminar-id');
         
         if (!seminarId) {
@@ -289,8 +309,12 @@ document.addEventListener('DOMContentLoaded', function() {
             diaryItems, 
             diaryItemsLength: diaryItems.length,
             container: !!container, 
-            emptyDiv: !!emptyDiv 
+            emptyDiv: !!emptyDiv,
+            ajaxurl: typeof ajaxurl !== 'undefined' ? ajaxurl : 'undefined'
         });
+        
+        // Debug: Show current cookies
+        console.log('All cookies:', document.cookie);
         
         if (!container) {
             console.warn('My Diary container (.my-diary-content) not found');
@@ -329,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Check if we have WordPress AJAX available
         if (typeof ajaxurl !== 'undefined' && ajaxurl) {
-            console.log('Using WordPress AJAX to fetch session data');
+            console.log('Using WordPress AJAX to fetch session data from:', ajaxurl);
             // Fetch session data for each diary item
             fetchSessionsData(diaryItems)
                 .then(sessions => {
@@ -352,19 +376,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch session data from WordPress
     function fetchSessionsData(sessionIds) {
         return new Promise((resolve, reject) => {
+            console.log('fetchSessionsData called with IDs:', sessionIds);
             // Use WordPress AJAX to fetch session data
             const data = new FormData();
             data.append('action', 'get_diary_sessions');
             data.append('session_ids', JSON.stringify(sessionIds));
             data.append('nonce', getDiaryNonce());
 
-            fetch(ajaxurl || '/wp-admin/admin-ajax.php', {
+            const fetchUrl = ajaxurl || '/wp-admin/admin-ajax.php';
+            console.log('Fetching from URL:', fetchUrl);
+
+            fetch(fetchUrl, {
                 method: 'POST',
                 body: data
             })
             .then(response => {
+                console.log('Fetch response status:', response.status, response.statusText);
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
                 }
                 return response.json();
             })
@@ -391,19 +420,19 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<h3 class="diary-day-header">My Saved Sessions</h3>';
         html += '<div class="diary-day-sessions">';
         
-        sessionIds.forEach(sessionId => {
+        sessionIds.forEach((sessionId, index) => {
             html += '<div class="diary-session" data-session-id="' + sessionId + '">';
             html += '<div class="diary-session-header">';
             html += '<div>';
-            html += '<span class="diary-session-time">Session ID: ' + sessionId + '</span>';
+            html += '<span class="diary-session-time">Session ' + (index + 1) + '</span>';
             html += '</div>';
             if (config.showRemoveButtons) {
                 html += '<button class="diary-remove-btn" data-session-id="' + sessionId + '" title="Remove from diary">Remove</button>';
             }
             html += '</div>';
-            html += '<div class="diary-session-title">Session ' + sessionId + '</div>';
+            html += '<div class="diary-session-title">Session ID: ' + sessionId + '</div>';
             if (config.showDetails) {
-                html += '<div class="diary-session-details">Session details are not available in this view. Please check the main agenda for full information.</div>';
+                html += '<div class="diary-session-details">Session details are loading... Please refresh the page if this persists. You can view the full session details on the main agenda.</div>';
             }
             html += '</div>';
         });
@@ -416,6 +445,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (config.showRemoveButtons) {
             attachRemoveButtonListeners();
         }
+        
+        // Show a helpful message about refreshing
+        setTimeout(function() {
+            const refreshButton = document.querySelector('.my-diary-refresh-btn');
+            if (refreshButton) {
+                refreshButton.style.animation = 'pulse 2s infinite';
+                refreshButton.title = 'Click to try loading session details again';
+            }
+        }, 2000);
     }
 
     // Get nonce for AJAX requests
@@ -438,11 +476,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const sortedDates = Object.keys(sessionsByDate).sort();
         
         let html = '';
+        let dayCounter = 1;
         
         sortedDates.forEach(date => {
-            const dateObj = new Date(date + 'T00:00:00');
-            const formattedDate = formatDate(dateObj);
-            const dateSessions = sessionsByDate[date];
+            const dateInfo = sessionsByDate[date];
+            const dateSessions = dateInfo.sessions;
+            const dayTitle = dateInfo.title; // Use day title from taxonomy
+            
+            // Use taxonomy title if available, otherwise format the date
+            let displayTitle;
+            if (dayTitle && dayTitle.trim() !== '') {
+                displayTitle = dayTitle;
+            } else {
+                const dateObj = new Date(date + 'T00:00:00');
+                displayTitle = formatDate(dateObj);
+            }
             
             // Sort sessions by time
             dateSessions.sort((a, b) => {
@@ -452,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             html += '<div class="diary-day-group">';
-            html += `<h3 class="diary-day-header">${formattedDate}</h3>`;
+            html += `<h3 class="diary-day-header">${displayTitle}</h3>`;
             html += '<div class="diary-day-sessions">';
             
             dateSessions.forEach(session => {
@@ -460,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             html += '</div></div>';
+            dayCounter++;
         });
         
         container.innerHTML = html;
@@ -468,6 +517,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (config.showRemoveButtons) {
             attachRemoveButtonListeners();
         }
+        
+        // Attach modal event listeners
+        attachModalEventListeners();
     }
 
     // Group sessions by date
@@ -476,10 +528,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         sessions.forEach(session => {
             const date = session.date || extractDateFromSession(session);
+            const dateTitle = session.date_title || ''; // Get the day title from taxonomy
             if (!grouped[date]) {
-                grouped[date] = [];
+                grouped[date] = {
+                    sessions: [],
+                    title: dateTitle // Store the day title from taxonomy
+                };
             }
-            grouped[date].push(session);
+            grouped[date].sessions.push(session);
         });
         
         return grouped;
@@ -519,15 +575,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderSessionCard(session, config) {
         const showDetails = config.showDetails;
         const showRemoveButtons = config.showRemoveButtons;
+        const modalId = 'diary-modal-' + session.id;
+        
+        console.log('Rendering session card:', {
+            sessionId: session.id,
+            title: session.title,
+            showDetails: showDetails,
+            hasContent: !!session.content,
+            contentLength: session.content ? session.content.length : 0
+        });
         
         let html = `<div class="diary-session" data-session-id="${session.id}">`;
         
-        // Session header with time and track
+        // Session header with track info only (time is displayed in title)
         html += '<div class="diary-session-header">';
         html += '<div>';
-        if (session.time) {
-            html += `<span class="diary-session-time">${session.time}</span>`;
-        }
         if (session.track) {
             html += `<span class="diary-session-track">${session.track}</span>`;
         }
@@ -538,21 +600,85 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         html += '</div>';
         
-        // Session title
-        html += `<div class="diary-session-title">${session.title || 'Untitled Session'}</div>`;
+        // Session title with time prefix
+        let titleWithTime = session.title || 'Untitled Session';
+        if (session.time) {
+            titleWithTime = `${session.time} - ${titleWithTime}`;
+        }
+        html += `<div class="diary-session-title">${titleWithTime}</div>`;
         
         // Session details
-        if (showDetails) {
-            if (session.content) {
-                html += `<div class="diary-session-details">${truncateText(session.content, 150)}</div>`;
+        if (showDetails && session.content) {
+            const fullContent = stripHtmlTags(session.content);
+            const maxLength = 150;
+            
+            console.log('Session content processing:', {
+                originalLength: session.content.length,
+                strippedLength: fullContent.length,
+                willTruncate: fullContent.length > maxLength
+            });
+            
+            if (fullContent.length > maxLength) {
+                // Content is long, show truncated with "more..." link
+                const shortContent = fullContent.substring(0, maxLength) + '...';
+                html += `<div class="diary-session-details">`;
+                html += shortContent;
+                html += ` <i class="fas fa-info-circle" aria-hidden="true"></i> `;
+                html += `<a href="#" class="more-details-link" data-modal="${modalId}">more....</a>`;
+                html += `</div>`;
+                
+                // Add modal for full content
+                html += createSessionModal(modalId, session);
+            } else {
+                // Content is short, show it all
+                html += `<div class="diary-session-details">${fullContent}</div>`;
             }
-            if (session.speakers) {
-                html += `<div class="diary-session-speakers">Speakers: ${session.speakers}</div>`;
-            }
+        } else if (showDetails && !session.content) {
+            console.warn('Session has no content to display:', session.id);
+            html += `<div class="diary-session-details">No details available for this session.</div>`;
+        } else {
+            console.log('Details hidden due to config.showDetails =', showDetails);
+        }
+        
+        // Session speakers
+        if (showDetails && session.speakers) {
+            html += `<div class="diary-session-speakers">Speakers: ${session.speakers}</div>`;
         }
         
         html += '</div>';
+        console.log('Generated HTML for session', session.id, ':', html.substring(0, 200) + '...');
         return html;
+    }
+
+    // Create modal HTML for session details
+    function createSessionModal(modalId, session) {
+        let modalHtml = `
+        <div id="${modalId}" class="modal diary-modal" style="display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);">
+            <div class="modal-content" style="position:relative;background-color:#fefefe;margin:5% auto;padding:0;border:1px solid #888;width:80%;max-width:700px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <span class="close-modal" data-modal="${modalId}" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;z-index:10000;">&times;</span>
+                <div class="modal-body" style="margin:20px;padding-right:30px;">
+                    <div class="modal-session-title" style="font-size:1.2em;font-weight:bold;margin-bottom:10px;color:#333;">
+                        ${session.title || 'Session Details'}
+                    </div>
+                    <div class="modal-session-time" style="color:#666;margin-bottom:15px;">
+                        ${session.time ? `<strong>Time:</strong> ${session.time}` : ''}
+                        ${session.track ? ` | <strong>Track:</strong> ${session.track}` : ''}
+                    </div>
+                    <div class="modal-session-content" style="line-height:1.6;color:#333;">
+                        ${session.content || 'No additional details available.'}
+                    </div>
+                    ${session.speakers ? `<div class="modal-session-speakers" style="margin-top:15px;padding-top:15px;border-top:1px solid #eee;"><strong>Speakers:</strong> ${session.speakers}</div>` : ''}
+                </div>
+            </div>
+        </div>`;
+        
+        return modalHtml;
+    }
+
+    // Strip HTML tags from content
+    function stripHtmlTags(str) {
+        if (!str) return '';
+        return str.replace(/<[^>]*>/g, '');
     }
 
     // Truncate text to specified length
@@ -586,6 +712,61 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 100);
                 }
             });
+        });
+    }
+
+    // Attach modal event listeners
+    function attachModalEventListeners() {
+        // More details links
+        const moreLinks = document.querySelectorAll('.more-details-link');
+        moreLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const modalId = this.getAttribute('data-modal');
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'block';
+                    // Prevent body scroll when modal is open
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        });
+
+        // Close modal buttons
+        const closeButtons = document.querySelectorAll('.close-modal');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const modalId = this.getAttribute('data-modal');
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.style.display = 'none';
+                    // Restore body scroll
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        });
+
+        // Close modal when clicking outside of it
+        const modals = document.querySelectorAll('.diary-modal');
+        modals.forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openModals = document.querySelectorAll('.diary-modal[style*="display: block"], .diary-modal[style*="display:block"]');
+                openModals.forEach(modal => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                });
+            }
         });
     }
 });

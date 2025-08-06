@@ -55,7 +55,7 @@
         <div id="tab2" class="tab-content">
             <h3>My Personal Agenda</h3>
             
-            <!-- Simulate WordPress shortcode output -->
+            <!-- Simulate WordPress shortcode output with enhanced structure -->
             <div class="my-diary-container my-diary-grid">
                 <div class="my-diary-header">
                     <h3 class="my-diary-title">My Personal Agenda</h3>
@@ -77,9 +77,12 @@
             <!-- Test controls -->
             <div style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px;">
                 <h4>Test Controls</h4>
-                <button onclick="addTestSession()">Add Test Session to Cookie</button>
+                <button onclick="addTestSession('2025-08-06', 'Day 1')">Add Day 1 Session</button>
+                <button onclick="addTestSession('2025-08-07', 'Day 2')">Add Day 2 Session</button>
+                <button onclick="addTestSession('2025-08-08', 'Day 3')">Add Day 3 Session</button>
                 <button onclick="clearDiary()">Clear Diary</button>
                 <button onclick="showCookieContent()">Show Cookie Content</button>
+                <button onclick="testModalDisplay()">Test Modal Display</button>
                 <div id="cookie-display" style="margin-top: 10px; font-family: monospace; font-size: 12px;"></div>
             </div>
         </div>
@@ -145,7 +148,10 @@
         }
 
         // Test functions
-        function addTestSession() {
+        function addTestSession(date, dayName) {
+            date = date || '2025-08-06';
+            dayName = dayName || 'Day 1';
+            
             let diary = getCookie('AddToDiary');
             let sessions = [];
             if (diary) {
@@ -163,14 +169,40 @@
             setCookie('AddToDiary', JSON.stringify(sessions), 30);
             showCookieContent();
             
+            // Create mock session data for demonstration
+            if (typeof window.mockSessionData === 'undefined') {
+                window.mockSessionData = {};
+            }
+            
+            window.mockSessionData[testId] = {
+                id: testId,
+                title: `Sample Session for ${dayName}`,
+                content: `<p>This is a detailed description of the session for ${dayName}. This session covers important topics and provides valuable insights.</p><p>Join us for an informative session that will enhance your knowledge and skills.</p>`,
+                content_plain: `This is a detailed description of the session for ${dayName}. This session covers important topics and provides valuable insights. Join us for an informative session that will enhance your knowledge and skills.`,
+                time: getRandomTime(),
+                date: date,
+                track: 'Track ' + Math.ceil(Math.random() * 4),
+                speakers: 'Dr. Jane Smith, Prof. John Doe',
+                permalink: '#'
+            };
+            
             // Trigger refresh
             if (typeof window.refreshMyDiary === 'function') {
                 window.refreshMyDiary();
             }
         }
 
+        function getRandomTime() {
+            const hours = [9, 10, 11, 14, 15, 16];
+            const hour = hours[Math.floor(Math.random() * hours.length)];
+            const minute = Math.random() > 0.5 ? '00' : '30';
+            const endHour = hour + 1;
+            return `${hour}:${minute} - ${endHour}:${minute}`;
+        }
+
         function clearDiary() {
             setCookie('AddToDiary', '[]', 30);
+            window.mockSessionData = {};
             showCookieContent();
             
             // Trigger refresh
@@ -183,6 +215,34 @@
             const diary = getCookie('AddToDiary');
             document.getElementById('cookie-display').innerHTML = 
                 'AddToDiary Cookie: ' + (diary || 'Not set');
+        }
+
+        function testModalDisplay() {
+            // Create a test modal to verify styling
+            const modalHtml = `
+            <div id="test-modal" class="modal diary-modal" style="display:block;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);">
+                <div class="modal-content" style="position:relative;background-color:#fefefe;margin:5% auto;padding:0;border:1px solid #888;width:80%;max-width:700px;border-radius:8px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                    <span class="close-modal" onclick="closeTestModal()" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;z-index:10000;">&times;</span>
+                    <div class="modal-body" style="margin:20px;padding-right:30px;">
+                        <div class="modal-session-title">Test Session Modal</div>
+                        <div class="modal-session-time"><strong>Time:</strong> 10:00 - 11:00 | <strong>Track:</strong> Track 1</div>
+                        <div class="modal-session-content">
+                            <p>This is a test modal to verify the styling and functionality.</p>
+                            <p>The modal should display properly with all styling applied.</p>
+                        </div>
+                        <div class="modal-session-speakers"><strong>Speakers:</strong> Test Speaker 1, Test Speaker 2</div>
+                    </div>
+                </div>
+            </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeTestModal() {
+            const modal = document.getElementById('test-modal');
+            if (modal) {
+                modal.remove();
+            }
         }
 
         // Mock refresh function if the real one isn't loaded

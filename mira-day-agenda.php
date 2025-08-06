@@ -48,22 +48,18 @@
     5. Cookie persists for 30 days
     6. Responsive button design with yellow/orange and grey states
  
- * Version 1.14. 2025-08-06 - Added Display My Diary shortcode and WPBakery element
-    1. New [display-my-diary] shortcode to show saved sessions
-    2. WPBakery "Display My Diary" element with configuration options
-    3. Sessions grouped by day and ordered by time
-    4. Multiple display styles: Grid, List, Compact
-    5. AJAX-powered session data fetching
-    6. Remove buttons to manage diary entries
-    7. Empty state messaging and responsive design
-     
+ * Version 1.18. 2025-08-06 - MyDiary date taxonomy fix
+    1. Fixed incorrect date display in MyDiary - now uses proper taxonomy date titles
+    2. Enhanced AJAX handler to always retrieve date_title from 'date' taxonomy regardless of session_start
+    3. MyDiary now shows proper day titles like "Day 1 - Tuesday, 21st October 2025" instead of hardcoded dates
+    4. Improved date detection logic to prioritize taxonomy information over meta fields
         
  
  
  */
  
 define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.14"); // Set to false on production
+define('VERSION', "1.18"); // Updated version for MyDiary date taxonomy fix
 
 
  // Exit if accessed directly.
@@ -255,13 +251,13 @@ function display_my_diary_shortcode($atts) {
         'style' => 'grid',
         'show_empty_message' => 'yes',
         'empty_message' => '',
-        'show_details' => 'yes',
+        'show_details' => 'yes', // Always default to showing details
         'show_remove_buttons' => 'yes',
     ), $atts, 'display-my-diary');
 
     // Convert string values to booleans
     $show_empty_message = ($atts['show_empty_message'] === 'yes');
-    $show_details = ($atts['show_details'] === 'yes');
+    $show_details = ($atts['show_details'] !== 'no'); // Show details unless explicitly set to 'no'
     $show_remove_buttons = ($atts['show_remove_buttons'] === 'yes');
     $style = esc_attr($atts['style']);
     $empty_message = !empty($atts['empty_message']) ? esc_html($atts['empty_message']) : 'Your diary is empty. Add sessions from the agenda to see them here.';
@@ -293,51 +289,67 @@ function display_my_diary_shortcode($atts) {
     echo '</div>';
 
     // Add JavaScript to populate the diary
-    echo '<script type="text/javascript">';
-    echo 'var ajaxurl = "' . admin_url('admin-ajax.php') . '";';
-    echo 'var myDiaryConfig = {';
-    echo '  style: "' . $style . '",';
-    echo '  showDetails: ' . ($show_details ? 'true' : 'false') . ',';
-    echo '  showRemoveButtons: ' . ($show_remove_buttons ? 'true' : 'false') . ',';
-    echo '  showEmptyMessage: ' . ($show_empty_message ? 'true' : 'false') . '';
-    echo '};';
-    echo '';
-    echo 'function refreshMyDiary() {';
-    echo '  console.log("Manual refresh triggered");';
-    echo '  if (typeof populateMyDiary === "function") {';
-    echo '    populateMyDiary(myDiaryConfig);';
-    echo '  }';
-    echo '}';
-    echo '';
-    echo 'document.addEventListener("DOMContentLoaded", function() {';
-    echo '  // Initial population';
-    echo '  if (typeof populateMyDiary === "function") {';
-    echo '    populateMyDiary(myDiaryConfig);';
-    echo '  }';
-    echo '  ';
-    echo '  // Tab/window focus detection for tab-based interfaces';
-    echo '  window.addEventListener("focus", function() {';
-    echo '    console.log("Window gained focus, refreshing diary");';
-    echo '    if (typeof populateMyDiary === "function") {';
-    echo '      populateMyDiary(myDiaryConfig);';
-    echo '    }';
-    echo '  });';
-    echo '  ';
-    echo '  // Page visibility API for better tab detection';
-    echo '  document.addEventListener("visibilitychange", function() {';
-    echo '    if (!document.hidden) {';
-    echo '      console.log("Tab became visible, refreshing diary");';
-    echo '      if (typeof populateMyDiary === "function") {';
-    echo '        setTimeout(function() {';
-    echo '          populateMyDiary(myDiaryConfig);';
-    echo '        }, 100);';
-    echo '      }';
-    echo '    }';
-    echo '  });';
-    echo '});';
-    echo '</script>';
+    $script = '
+<script type="text/javascript">
+var ajaxurl = "' . admin_url('admin-ajax.php') . '";
+var myDiaryConfig = {
+  style: "' . $style . '",
+  showDetails: ' . ($show_details ? 'true' : 'false') . ',
+  showRemoveButtons: ' . ($show_remove_buttons ? 'true' : 'false') . ',
+  showEmptyMessage: ' . ($show_empty_message ? 'true' : 'false') . '
+};
 
-    return ob_get_clean();
+function refreshMyDiary() {
+  console.log("Manual refresh triggered");
+  if (typeof populateMyDiary === "function") {
+    populateMyDiary(myDiaryConfig);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  // Initial population
+  if (typeof populateMyDiary === "function") {
+    populateMyDiary(myDiaryConfig);
+  }
+  
+  // Tab/window focus detection for tab-based interfaces
+  window.addEventListener("focus", function() {
+    console.log("Window gained focus, refreshing diary");
+    if (typeof populateMyDiary === "function") {
+      populateMyDiary(myDiaryConfig);
+    }
+  });
+  
+  // Page visibility API for better tab detection
+  document.addEventListener("visibilitychange", function() {
+    if (!document.hidden) {
+      console.log("Tab became visible, refreshing diary");
+      if (typeof populateMyDiary === "function") {
+        setTimeout(function() {
+          populateMyDiary(myDiaryConfig);
+        }, 100);
+      }
+    }
+  });
+});
+</script>';
+
+    echo $script;
+
+    // Debug: Ensure we got this far
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('display_my_diary_shortcode completed successfully');
+    }
+
+    $output = ob_get_clean();
+    
+    // Additional debug: check if script tag is in output
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('Output contains </script>: ' . (strpos($output, '</script>') !== false ? 'YES' : 'NO'));
+        error_log('Output length: ' . strlen($output));
+    }
+    
+    return $output;
 }
 
 add_shortcode('display-my-diary', 'display_my_diary_shortcode');
@@ -365,22 +377,67 @@ function debug_my_diary_shortcode($atts) {
         echo '</ul>';
     }
     
-    // JavaScript to show cookie contents
+    // JavaScript to show cookie contents and test functionality
     echo '<p><strong>Cookie Contents:</strong> <span id="cookie-debug">Checking...</span></p>';
+    echo '<p><strong>AJAX URL:</strong> ' . admin_url('admin-ajax.php') . '</p>';
     echo '<button onclick="testAjax()">Test AJAX Call</button>';
-    echo '<div id="ajax-result" style="margin-top: 10px;"></div>';
+    echo '<button onclick="addTestSessionToCookie()">Add Test Session to Cookie</button>';
+    echo '<button onclick="clearCookie()">Clear Cookie</button>';
+    echo '<button onclick="checkScripts()">Check Script Loading</button>';
+    echo '<div id="ajax-result" style="margin-top: 10px; background: white; padding: 10px; border: 1px solid #ccc;"></div>';
     
     echo '<script>';
     echo 'document.addEventListener("DOMContentLoaded", function() {';
-    echo '  var cookie = document.cookie.split(";").find(c => c.trim().startsWith("AddToDiary="));';
-    echo '  document.getElementById("cookie-debug").textContent = cookie || "No AddToDiary cookie found";';
+    echo '  updateCookieDisplay();';
     echo '});';
     
+    echo 'function updateCookieDisplay() {';
+    echo '  var cookie = document.cookie.split(";").find(c => c.trim().startsWith("AddToDiary="));';
+    echo '  document.getElementById("cookie-debug").textContent = cookie || "No AddToDiary cookie found";';
+    echo '}';
+    
+    echo 'function addTestSessionToCookie() {';
+    echo '  if (!window.setCookie) {';
+    echo '    document.getElementById("ajax-result").innerHTML = "<p style=\"color: red;\">MyDiary scripts not loaded!</p>";';
+    echo '    return;';
+    echo '  }';
+    if (!empty($seminars)) {
+        echo '  var testId = "' . $seminars[0]->ID . '";';
+    } else {
+        echo '  var testId = "999";';
+    }
+    echo '  var existing = window.getCookie("AddToDiary");';
+    echo '  var sessions = existing ? JSON.parse(existing) : [];';
+    echo '  if (!sessions.includes(testId)) sessions.push(testId);';
+    echo '  window.setCookie("AddToDiary", JSON.stringify(sessions), 30);';
+    echo '  updateCookieDisplay();';
+    echo '  document.getElementById("ajax-result").innerHTML = "<p style=\"color: green;\">Added session " + testId + " to cookie</p>";';
+    echo '}';
+    
+    echo 'function clearCookie() {';
+    echo '  document.cookie = "AddToDiary=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";';
+    echo '  updateCookieDisplay();';
+    echo '  document.getElementById("ajax-result").innerHTML = "<p>Cookie cleared</p>";';
+    echo '}';
+    
+    echo 'function checkScripts() {';
+    echo '  var results = [];';
+    echo '  results.push("MyDiary setCookie: " + (typeof window.setCookie !== "undefined" ? "✓ Loaded" : "✗ Missing"));';
+    echo '  results.push("MyDiary getCookie: " + (typeof window.getCookie !== "undefined" ? "✓ Loaded" : "✗ Missing"));';
+    echo '  results.push("populateMyDiary: " + (typeof window.populateMyDiary !== "undefined" ? "✓ Loaded" : "✗ Missing"));';
+    echo '  results.push("refreshMyDiary: " + (typeof window.refreshMyDiary !== "undefined" ? "✓ Loaded" : "✗ Missing"));';
+    echo '  results.push("AJAX URL: " + (typeof ajaxurl !== "undefined" ? ajaxurl : "✗ Missing"));';
+    echo '  document.getElementById("ajax-result").innerHTML = "<pre>" + results.join("\\n") + "</pre>";';
+    echo '}';
+    
     echo 'function testAjax() {';
-    echo '  var testIds = ["123", "456"];';
+    echo '  var cookie = window.getCookie ? window.getCookie("AddToDiary") : null;';
+    echo '  var testIds = cookie ? JSON.parse(cookie) : ["' . (!empty($seminars) ? $seminars[0]->ID : '999') . '"];';
     echo '  var data = new FormData();';
     echo '  data.append("action", "get_diary_sessions");';
     echo '  data.append("session_ids", JSON.stringify(testIds));';
+    echo '  ';
+    echo '  document.getElementById("ajax-result").innerHTML = "<p>Testing AJAX with IDs: " + JSON.stringify(testIds) + "</p>";';
     echo '  ';
     echo '  fetch("' . admin_url('admin-ajax.php') . '", {';
     echo '    method: "POST",';
@@ -388,10 +445,10 @@ function debug_my_diary_shortcode($atts) {
     echo '  })';
     echo '  .then(response => response.json())';
     echo '  .then(result => {';
-    echo '    document.getElementById("ajax-result").innerHTML = "<pre>" + JSON.stringify(result, null, 2) + "</pre>";';
+    echo '    document.getElementById("ajax-result").innerHTML = "<h4>AJAX Response:</h4><pre>" + JSON.stringify(result, null, 2) + "</pre>";';
     echo '  })';
     echo '  .catch(error => {';
-    echo '    document.getElementById("ajax-result").innerHTML = "<p style=\"color: red;\">Error: " + error + "</p>";';
+    echo '    document.getElementById("ajax-result").innerHTML = "<p style=\"color: red;\">AJAX Error: " + error + "</p>";';
     echo '  });';
     echo '}';
     echo '</script>';
@@ -438,10 +495,20 @@ function handle_get_diary_sessions() {
         $post = get_post($session_id);
         
         if ($post && $post->post_type === 'seminars' && $post->post_status === 'publish') {
-            // Get session metadata
+            // Get session metadata - use the correct meta field names
             $session_start = get_post_meta($session_id, 'session-start', true);
             $session_end = get_post_meta($session_id, 'session-end', true);
             $session_time = get_post_meta($session_id, 'session-time', true);
+            
+            // Also try the meta fields used by the main grid
+            if (empty($session_start)) {
+                $time_start = get_post_meta($session_id, 'time_start', true);
+                $time_end = get_post_meta($session_id, 'time_end', true);
+                if ($time_start && $time_end) {
+                    $session_start = $time_start;
+                    $session_end = $time_end;
+                }
+            }
             
             // Get track information
             $tracks = get_the_terms($session_id, 'track');
@@ -463,27 +530,64 @@ function handle_get_diary_sessions() {
                 $time_display = $start_time . ' - ' . $end_time;
             }
             
-            // Extract date
+            // Extract date - try multiple approaches for better date detection
             $date = '';
-            if ($session_start) {
-                $date = date('Y-m-d', strtotime($session_start));
-            } else {
-                // Try to get date from taxonomy
-                $dates = get_the_terms($session_id, 'date');
-                if ($dates && !is_wp_error($dates)) {
-                    $date = $dates[0]->slug;
+            $date_title = '';
+            
+            // Always try to get the date title from taxonomy first
+            $dates = get_the_terms($session_id, 'date');
+            if ($dates && !is_wp_error($dates)) {
+                $date_term = $dates[0];
+                $date_title = $date_term->name; // Store the actual day title from taxonomy
+                
+                // Try to get date from taxonomy slug or name
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_term->slug)) {
+                    $date = $date_term->slug;
+                } else {
+                    // Try to parse the term name as a date
+                    $parsed_date = strtotime($date_term->name);
+                    if ($parsed_date) {
+                        $date = date('Y-m-d', $parsed_date);
+                    } else {
+                        $date = $date_term->slug;
+                    }
                 }
+            }
+            
+            // If we have session_start but no date from taxonomy, use session_start for date
+            if (empty($date) && $session_start) {
+                $date = date('Y-m-d', strtotime($session_start));
+            }
+            
+            // If still no date, try to extract from other meta fields
+            if (empty($date)) {
+                $custom_date = get_post_meta($session_id, 'event_date', true);
+                if ($custom_date) {
+                    $parsed_date = strtotime($custom_date);
+                    if ($parsed_date) {
+                        $date = date('Y-m-d', $parsed_date);
+                    }
+                }
+            }
+            
+            // Fallback to post date if no specific date found
+            if (empty($date)) {
+                $date = date('Y-m-d', strtotime($post->post_date));
             }
             
             $sessions[] = array(
                 'id' => $session_id,
                 'title' => $post->post_title,
-                'content' => wp_strip_all_tags($post->post_content),
+                'content' => apply_filters('the_content', $post->post_content), // Keep full formatted content
+                'content_plain' => wp_strip_all_tags($post->post_content), // Also provide plain text version
                 'time' => $time_display,
                 'date' => $date,
+                'date_title' => $date_title, // Add the day title from taxonomy
                 'track' => $track_name,
                 'speakers' => $speakers,
-                'permalink' => get_permalink($session_id)
+                'permalink' => get_permalink($session_id),
+                'session_start' => $session_start,
+                'session_end' => $session_end
             );
         } else {
             error_log("Session $session_id not found or not published");
