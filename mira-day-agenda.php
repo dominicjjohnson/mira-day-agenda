@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.9.
+ * Version: 1.13.
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -39,6 +39,14 @@
  
  * Version 1.12. 2025-07-18 - New changes, requested by David Solar in email 17-07-2025
     1. Added a new parameter "link_title_to_details". If true then link to the details page. Default - link to popup."
+ 
+ * Version 1.13. 2025-08-06 - Added MyDiary functionality
+    1. Added "Add to MyDiary" button to each seminar
+    2. Clicking button adds seminar ID to "AddToDiary" cookie
+    3. Button changes to "In Diary" (grey) when added
+    4. Clicking "In Diary" removes seminar from cookie and resets button
+    5. Cookie persists for 30 days
+    6. Responsive button design with yellow/orange and grey states
      
         
  
@@ -46,7 +54,7 @@
  */
  
 define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.10"); // Set to false on production
+define('VERSION', "1.13"); // Set to false on production
 
 
  // Exit if accessed directly.
@@ -144,8 +152,44 @@ function mira_agenda_grid_old_shortcode($atts) {
     // Start output buffering
     ob_start();
 
-    // HTML content to display with the shortcode
+    // Set default values for missing parameters
+    $atts = shortcode_atts(array(
+        'day' => '',
+        'all-tracks' => '',
+        'track1' => '',
+        'track2' => '',
+        'track3' => '',
+        'track4' => '',
+        'track5' => '',
+        'track6' => '',
+        'track7' => '',
+        'track8' => '',
+        'border' => 'yes',
+        'display_heading_bar' => 'yes',
+        'show_end_time' => 'false',
+        'time_slot_side' => 'false',
+    ), $atts, 'agenda-grid');
 
+    // Debug: Show the incoming attributes (remove this after testing)
+    echo '<!-- DEBUG: Shortcode Attributes: ' . print_r($atts, true) . ' -->';
+    
+    // Debug: Log the incoming attributes
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('Agenda Grid Shortcode Attributes: ' . print_r($atts, true));
+    }
+
+    // Convert WPBakery string values to proper boolean types
+    if (isset($atts['display_heading_bar']) && in_array($atts['display_heading_bar'], ['yes', 'no'])) {
+        $atts['display_heading_bar'] = ($atts['display_heading_bar'] === 'yes');
+    }
+    if (isset($atts['show_end_time']) && in_array($atts['show_end_time'], ['true', 'false'])) {
+        $atts['show_end_time'] = ($atts['show_end_time'] === 'true');
+    }
+    if (isset($atts['time_slot_side']) && in_array($atts['time_slot_side'], ['true', 'false'])) {
+        $atts['time_slot_side'] = ($atts['time_slot_side'] === 'true');
+    }
+
+    // HTML content to display with the shortcode
     $inputs = get_parameters($atts);
     if (!empty($inputs['error'])) {
         echo "<script>console.error(" . json_encode($inputs['error_message']) . ");</script>";
@@ -223,6 +267,24 @@ function mira_agenda_grid_old_enqueue_assets() {
       plugin_dir_url(__FILE__) . 'assets/js/solar-agenda-grid.js',
       array(),
       null,
+      true
+  );
+
+  // Enqueue MyDiary CSS
+  wp_enqueue_style(
+      'mira-mydiary-style',
+      plugins_url('assets/css/mydiary.css', __FILE__),
+      array(),
+      DEVMODE ? time() : VERSION,
+      'all'
+  );
+
+  // Enqueue MyDiary JS
+  wp_enqueue_script(
+      'mira-mydiary-script',
+      plugin_dir_url(__FILE__) . 'assets/js/mydiary.js',
+      array(),
+      DEVMODE ? time() : VERSION,
       true
   );
 }

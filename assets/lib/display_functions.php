@@ -24,6 +24,26 @@ foreach ($time_slots as $time) {
 return $rtn;
 }
 
+/**
+ * Generate MyDiary button HTML
+ * @param int $seminar_id The ID of the seminar
+ * @return string HTML for the MyDiary button
+ */
+function generate_mydiary_button($seminar_id) {
+    if (empty($seminar_id)) {
+        return '';
+    }
+    
+    return '<div class="mydiary-container">
+        <button class="mydiary-btn mydiary-add" 
+                data-seminar-id="' . esc_attr($seminar_id) . '" 
+                type="button" 
+                title="Click to add to diary">
+            Add to MyDiary
+        </button>
+    </div>';
+}
+
 function get_parameters($atts) {
     /* This function should return the parameters for the shortcode
   Params:
@@ -947,6 +967,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   }
 
   if ($sessions[$rowID]['trackID'] == "track-all") {
+    $mydiary_button = generate_mydiary_button($session_id);
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
         <div class="banner">
@@ -959,6 +980,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
             <p>{$post_content}</p>
           </div>
           {$speaker_html}
+          {$mydiary_button}
         </div>
       </div>
       HTML; 
@@ -983,6 +1005,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     // removed       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
     
+    $mydiary_button = generate_mydiary_button($session_id);
     $output = <<<HTML
     
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['gridColumn']}-border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-width: 1px;">
@@ -998,6 +1021,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       {$type_html}
 
       <span class="session-presenter">{$speaker_html}</span>
+      {$mydiary_button}
     </div>
     HTML;
   }

@@ -86,6 +86,58 @@ if (function_exists('vc_map')) {
                 'admin_label' => true,
                 'maxlength'   => 25,
             ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Border',
+                'param_name'  => 'border',
+                'description' => 'Display border around the agenda grid.',
+                'value'       => array(
+                    'Yes' => 'yes',
+                    'No'  => 'no',
+                ),
+                'std'         => 'yes',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Display Heading Bar',
+                'param_name'  => 'display_heading_bar',
+                'description' => 'Show the heading bar at the top of the agenda.',
+                'value'       => array(
+                    'Yes' => 'yes',
+                    'No'  => 'no',
+                ),
+                'std'         => 'yes',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Show End Time',
+                'param_name'  => 'show_end_time',
+                'description' => 'Display the end time for each session.',
+                'value'       => array(
+                    'Yes' => 'true',
+                    'No'  => 'false',
+                ),
+                'std'         => 'false',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
+            array(
+                'type'        => 'dropdown',
+                'heading'     => 'Time Slot Side',
+                'param_name'  => 'time_slot_side',
+                'description' => 'Display time slots on the side.',
+                'value'       => array(
+                    'Yes' => 'true',
+                    'No'  => 'false',
+                ),
+                'std'         => 'false',
+                'admin_label' => true,
+                'save_always' => true,
+            ),
             // Additional fields...
 
         ),
@@ -115,27 +167,6 @@ function save_agenda_grid() {
         'date'   => $date
     ));
 }
-
-function agenda_grid_shortcode($atts) {
-    $tracks = get_option('mm_agenda_tracks', array());
-    $date   = get_option('mm_agenda_date', '');
-
-    ob_start();
-    echo '<div id="saved-data" style="border: 1px solid #ccc; padding: 10px; margin-top: 15px;">';
-    echo '<h3>Saved Agenda</h3>';
-    echo '<p><strong>Date:</strong> ' . esc_html($date) . '</p>';
-    echo '<ul>';
-    foreach ($tracks as $track) {
-        echo '<li>' . esc_html($track) . '</li>';
-    }
-    echo '</ul>';
-    echo '</div>';
-
-    return ob_get_clean();
-}
-add_shortcode('agenda-grid', 'agenda_grid_shortcode');
-
-
 
 // Inline admin JS for saving agenda grid
 add_action('admin_footer', function () {
