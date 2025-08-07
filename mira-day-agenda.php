@@ -162,8 +162,50 @@ function mira_agenda_options_page() {
             <h3>Plugin Information</h3>
             <p><strong>Version:</strong> <?php echo VERSION; ?></p>
             <p><strong>Development Mode:</strong> <?php echo DEVMODE ? 'Enabled' : 'Disabled'; ?></p>
-            <p><strong>Shortcode:</strong> <code>[agenda-grid day="2025-10-01"]</code></p>
+            <p><strong>Basic Shortcode:</strong> <code>[agenda-grid day="2025-10-01"]</code></p>
             <p><strong>WP Bakery Element:</strong> Available in Visual Composer as "Agenda Grid"</p>
+            
+            <h4>All Available Shortcode Parameters:</h4>
+            <div style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px;">
+                <p><strong>Basic Usage:</strong></p>
+                <code>[agenda-grid day="2025-10-01"]</code>
+                
+                <p style="margin-top: 15px;"><strong>All Parameters:</strong></p>
+                <pre style="background: #f0f0f0; padding: 10px; border-radius: 3px; font-size: 12px; line-height: 1.4;">[agenda-grid 
+    day="2025-10-01"                    <!-- Conference date (required) -->
+    all-tracks="allcolumns"             <!-- Show all tracks or specific track -->
+    track1=""                           <!-- Specific track for column 1 -->
+    track2=""                           <!-- Specific track for column 2 -->
+    track3=""                           <!-- Specific track for column 3 -->
+    track4=""                           <!-- Specific track for column 4 -->
+    track5=""                           <!-- Specific track for column 5 -->
+    track6=""                           <!-- Specific track for column 6 -->
+    track7=""                           <!-- Specific track for column 7 -->
+    track8=""                           <!-- Specific track for column 8 -->
+    border="yes"                        <!-- Show border: yes/no -->
+    display_heading_bar="yes"           <!-- Show heading bar: yes/no -->
+    show_end_time="false"               <!-- Show end times: true/false -->
+    time_slot_side="true"               <!-- Time slots on side: true/false -->
+    display_seminar_type="no"           <!-- Show session types: yes/no -->
+    display_seminar_duration="no"       <!-- Show session duration: yes/no -->
+]</pre>
+                
+                <p style="margin-top: 15px;"><strong>Parameter Details:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li><strong>day:</strong> Date slug from taxonomy (e.g., "2025-10-01")</li>
+                    <li><strong>all-tracks:</strong> Use "allcolumns" to show all tracks</li>
+                    <li><strong>track1-8:</strong> Specific track slugs for individual columns</li>
+                    <li><strong>border:</strong> "yes" or "no" - adds border around grid</li>
+                    <li><strong>display_heading_bar:</strong> "yes" or "no" - shows track headers</li>
+                    <li><strong>show_end_time:</strong> "true" or "false" - displays session end times</li>
+                    <li><strong>time_slot_side:</strong> "true" or "false" - positions time slots</li>
+                    <li><strong>display_seminar_type:</strong> "yes" or "no" - shows session types</li>
+                    <li><strong>display_seminar_duration:</strong> "yes" or "no" - shows duration</li>
+                </ul>
+                
+                <p style="margin-top: 15px;"><strong>Example with Multiple Parameters:</strong></p>
+                <code>[agenda-grid day="2025-10-01" border="no" show_end_time="true" display_seminar_type="yes"]</code>
+            </div>
         </div>
     </div>
     <?php
