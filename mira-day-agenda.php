@@ -131,6 +131,14 @@ function mira_agenda_settings_init() {
         'mira_agenda_settings',
         'mira_agenda_settings_section'
     );
+
+    add_settings_field(
+        'enable_my_diary',
+        __('Enable My Diary Feature', 'mira-day-agenda'),
+        'mira_agenda_enable_my_diary_render',
+        'mira_agenda_settings',
+        'mira_agenda_settings_section'
+    );
 }
 
 function mira_agenda_more_button_char_limit_render() {
@@ -139,6 +147,18 @@ function mira_agenda_more_button_char_limit_render() {
     ?>
     <input type='number' name='mira_agenda_settings[more_button_char_limit]' value='<?php echo esc_attr($value); ?>' min='50' max='1000' step='10'>
     <p class="description">Number of characters to display before showing the "More" button. Default: 200</p>
+    <?php
+}
+
+function mira_agenda_enable_my_diary_render() {
+    $options = get_option('mira_agenda_settings');
+    $value = isset($options['enable_my_diary']) ? $options['enable_my_diary'] : 'yes';
+    ?>
+    <select name='mira_agenda_settings[enable_my_diary]'>
+        <option value='yes' <?php selected($value, 'yes'); ?>>Enable (Show "Add to My Diary" buttons)</option>
+        <option value='no' <?php selected($value, 'no'); ?>>Disable (Hide My Diary buttons)</option>
+    </select>
+    <p class="description">Control whether the "Add to My Diary" buttons appear on sessions. Default: Enable</p>
     <?php
 }
 
@@ -207,6 +227,35 @@ function mira_agenda_options_page() {
                 <code>[agenda-grid day="2025-10-01" border="no" show_end_time="true" display_seminar_type="yes"]</code>
             </div>
         </div>
+
+        <!-- My Diary Shortcodes Section -->
+        <div style="background: #f0f8ff; border: 1px solid #0073aa; border-radius: 5px; padding: 15px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #0073aa;">📋 My Diary Shortcodes</h3>
+            <div style="background: white; padding: 15px; border-radius: 3px;">
+                <p><strong>Display My Diary:</strong></p>
+                <pre style="background: #f9f9f9; padding: 10px; border-radius: 3px; font-family: monospace;">[display-my-diary 
+    style="grid"                        <!-- Display style: grid/list -->
+    show_empty_message="yes"            <!-- Show message when empty: yes/no -->
+    empty_message=""                    <!-- Custom empty message -->
+    show_details="yes"                  <!-- Show session details: yes/no -->
+    show_remove_buttons="yes"           <!-- Show remove buttons: yes/no -->
+]</pre>
+                
+                <p style="margin-top: 15px;"><strong>My Diary Debug (for developers):</strong></p>
+                <pre style="background: #f9f9f9; padding: 10px; border-radius: 3px; font-family: monospace;">[debug-my-diary]</pre>
+                
+                <p style="margin-top: 15px;"><strong>Parameter Details:</strong></p>
+                <ul style="margin-left: 20px;">
+                    <li><strong>style:</strong> "grid" or "list" - how diary items are displayed</li>
+                    <li><strong>show_empty_message:</strong> "yes" or "no" - shows message when diary is empty</li>
+                    <li><strong>empty_message:</strong> Custom text for empty diary (optional)</li>
+                    <li><strong>show_details:</strong> "yes" or "no" - shows session descriptions</li>
+                    <li><strong>show_remove_buttons:</strong> "yes" or "no" - allows removing items</li>
+                </ul>
+                
+                <p style="margin-top: 15px;"><strong>Note:</strong> My Diary functionality can be enabled/disabled in the settings above. When disabled, the diary shortcodes will show a disabled message instead of the diary interface.</p>
+            </div>
+        </div>
     </div>
     <?php
 }
@@ -215,6 +264,12 @@ function mira_agenda_options_page() {
 function mira_agenda_get_char_limit() {
     $options = get_option('mira_agenda_settings');
     return isset($options['more_button_char_limit']) ? (int)$options['more_button_char_limit'] : 200;
+}
+
+// Helper function to check if My Diary is enabled
+function mira_agenda_is_my_diary_enabled() {
+    $options = get_option('mira_agenda_settings');
+    return isset($options['enable_my_diary']) ? ($options['enable_my_diary'] === 'yes') : true; // Default to enabled
 }
 
 function is_mobile() {
@@ -406,6 +461,11 @@ add_shortcode( 'agenda-grid', 'mira_agenda_grid_old_shortcode' );
 
 // Register the Display My Diary shortcode
 function display_my_diary_shortcode($atts) {
+    // Check if My Diary is enabled
+    if (!mira_agenda_is_my_diary_enabled()) {
+        return '<div class="my-diary-disabled"><p>My Diary functionality is currently disabled.</p></div>';
+    }
+
     // Start output buffering
     ob_start();
 
@@ -462,6 +522,12 @@ var myDiaryConfig = {
   showEmptyMessage: ' . ($show_empty_message ? 'true' : 'false') . '
 };
 
+// Debug logging
+console.log("=== MY DIARY DEBUG ===");
+console.log("AJAX URL:", ajaxurl);
+console.log("Config:", myDiaryConfig);
+console.log("populateMyDiary function available:", typeof populateMyDiary);
+
 function refreshMyDiary() {
   console.log("Manual refresh triggered");
   if (typeof populateMyDiary === "function") {
@@ -499,26 +565,139 @@ document.addEventListener("DOMContentLoaded", function() {
 
     echo $script;
 
-    // Debug: Ensure we got this far
-    if (defined('WP_DEBUG') && WP_DEBUG) {
-        error_log('display_my_diary_shortcode completed successfully');
+        // Debug: Ensure we got this far
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('display_my_diary_shortcode completed successfully');
+        }
+
+        $output = ob_get_clean();
+        
+        // Additional debug: check if script tag is in output
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Output contains </script>: ' . (strpos($output, '</script>') !== false ? 'YES' : 'NO'));
+            error_log('Output length: ' . strlen($output));
+        }
+        
+        return $output;
     }
 
-    $output = ob_get_clean();
-    
-    // Additional debug: check if script tag is in output
-    if (defined('WP_DEBUG') && WP_DEBUG) {
-        error_log('Output contains </script>: ' . (strpos($output, '</script>') !== false ? 'YES' : 'NO'));
-        error_log('Output length: ' . strlen($output));
+    add_shortcode('display-my-diary', 'display_my_diary_shortcode');
+
+    // Debug diary status shortcode
+    function debug_diary_status_shortcode($atts) {
+        // Check if My Diary is enabled
+        if (!mira_agenda_is_my_diary_enabled()) {
+            return '<div class="debug-diary-status"><p><strong>My Diary Status:</strong> Disabled in settings</p></div>';
+        }
+
+        ob_start();
+        echo '<div class="debug-diary-status" style="background: #f0f8ff; border: 1px solid #0073aa; padding: 15px; margin: 10px 0; font-family: monospace;">';
+        echo '<h4 style="margin-top: 0;">My Diary Debug Status</h4>';
+        echo '<p><strong>My Diary Feature:</strong> ✅ Enabled</p>';
+        echo '<p><strong>AJAX URL:</strong> ' . admin_url('admin-ajax.php') . '</p>';
+        echo '<p><strong>Current Time:</strong> ' . current_time('Y-m-d H:i:s') . '</p>';
+        
+        // Check if posts exist
+        $seminars = get_posts(array(
+            'post_type' => 'seminars',
+            'posts_per_page' => 3,
+            'post_status' => 'publish'
+        ));
+        echo '<p><strong>Available Seminars:</strong> ' . count($seminars) . ' found</p>';
+        
+        if (count($seminars) > 0) {
+            echo '<p><strong>Sample Session IDs:</strong> ';
+            $sample_ids = array();
+            foreach (array_slice($seminars, 0, 3) as $seminar) {
+                $sample_ids[] = $seminar->ID;
+            }
+            echo implode(', ', $sample_ids) . '</p>';
+        }
+        
+        echo '<script>';
+        echo 'console.log("Debug Diary Status - AJAX URL available:", typeof ajaxurl !== "undefined" ? ajaxurl : "NOT AVAILABLE");';
+        echo 'console.log("Debug Diary Status - Current diary cookie:", document.cookie.split(";").find(c => c.trim().startsWith("AddToDiary=")));';
+        
+        // Define ajaxurl globally for the test functions
+        echo 'const ajaxurl = "' . admin_url('admin-ajax.php') . '";';
+        
+        // Add a test button to manually test AJAX
+        echo 'function testDiaryAjax() {';
+        echo '    console.log("=== AJAX TEST START ===");';
+        echo '    console.log("Testing AJAX manually...");';
+        echo '    const testIds = [' . implode(',', $sample_ids) . '];';
+        echo '    console.log("Test IDs:", testIds);';
+        echo '    console.log("Using AJAX URL:", ajaxurl);';
+        echo '    ';
+        echo '    document.getElementById("ajax-test-result").innerHTML = "Testing AJAX... please wait";';
+        echo '    ';
+        echo '    const data = new FormData();';
+        echo '    data.append("action", "get_diary_sessions");';
+        echo '    data.append("session_ids", JSON.stringify(testIds));';
+        echo '    console.log("FormData created with action:", data.get("action"));';
+        echo '    console.log("FormData created with session_ids:", data.get("session_ids"));';
+        echo '    ';
+        echo '    console.log("Starting fetch request...");';
+        echo '    fetch(ajaxurl, { ';
+        echo '        method: "POST", ';
+        echo '        body: data,';
+        echo '        credentials: "same-origin"';
+        echo '    })';
+        echo '    .then(response => {';
+        echo '        console.log("Fetch response received:", response.status, response.statusText);';
+        echo '        console.log("Response headers:", response.headers);';
+        echo '        if (!response.ok) {';
+        echo '            throw new Error(`HTTP error! status: ${response.status}`);';
+        echo '        }';
+        echo '        return response.text();';
+        echo '    })';
+        echo '    .then(text => {';
+        echo '        console.log("Raw response text:", text);';
+        echo '        try {';
+        echo '            const result = JSON.parse(text);';
+        echo '            console.log("Parsed JSON result:", result);';
+        echo '            document.getElementById("ajax-test-result").innerHTML = "<pre>" + JSON.stringify(result, null, 2) + "</pre>";';
+        echo '        } catch (e) {';
+        echo '            console.error("JSON parse error:", e);';
+        echo '            document.getElementById("ajax-test-result").innerHTML = "Response is not JSON:<br><pre>" + text + "</pre>";';
+        echo '        }';
+        echo '    })';
+        echo '    .catch(error => {';
+        echo '        console.error("AJAX Test Error:", error);';
+        echo '        document.getElementById("ajax-test-result").innerHTML = "Error: " + error.message;';
+        echo '    });';
+        echo '    console.log("=== AJAX TEST REQUEST SENT ===");';
+        echo '}';
+        echo '</script>';
+        
+        echo '<button onclick="testDiaryAjax()" style="background: #0073aa; color: white; padding: 10px; border: none; margin: 10px 0;">Test AJAX Call</button>';
+        echo '<div id="ajax-test-result" style="background: #f9f9f9; padding: 10px; margin: 10px 0; white-space: pre-wrap;"></div>';
+        
+        // Add button to create test diary data
+        if (count($seminars) > 0) {
+            echo '<button onclick="createTestDiary()" style="background: #00a32a; color: white; padding: 10px; border: none; margin: 10px 0;">Add Sample Sessions to Diary</button>';
+            echo '<script>';
+            echo 'function createTestDiary() {';
+            echo '    const testIds = [' . implode(',', $sample_ids) . '];';
+            echo '    document.cookie = "AddToDiary=" + JSON.stringify(testIds) + "; path=/";';
+            echo '    console.log("Created test diary with IDs:", testIds);';
+            echo '    alert("Test diary created! Now try viewing your My Diary display.");';
+            echo '}';
+            echo '</script>';
+        }
+        
+        echo '</div>';
+        
+        return ob_get_clean();
     }
-    
-    return $output;
-}
 
-add_shortcode('display-my-diary', 'display_my_diary_shortcode');
-
-// Debug shortcode to test diary functionality
+    add_shortcode('debug-diary-status', 'debug_diary_status_shortcode');// Debug shortcode to test diary functionality
 function debug_my_diary_shortcode($atts) {
+    // Check if My Diary is enabled
+    if (!mira_agenda_is_my_diary_enabled()) {
+        return '<div class="my-diary-debug-disabled"><p><strong>My Diary Debug:</strong> My Diary functionality is currently disabled in settings.</p></div>';
+    }
+
     ob_start();
     
     echo '<div style="background: #f9f9f9; padding: 20px; border: 1px solid #ddd; margin: 20px 0;">';
@@ -628,25 +807,41 @@ add_action('wp_ajax_get_diary_sessions', 'handle_get_diary_sessions');
 add_action('wp_ajax_nopriv_get_diary_sessions', 'handle_get_diary_sessions');
 
 function handle_get_diary_sessions() {
+    // Clean output buffer to ensure clean JSON response
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    ob_start();
+    
+    // Force enable error logging for this function
+    ini_set('log_errors', 1);
+    ini_set('error_log', WP_CONTENT_DIR . '/debug.log');
+    
     // Log for debugging
-    error_log('handle_get_diary_sessions called');
+    error_log('=== DIARY AJAX HANDLER CALLED ===');
+    error_log('Request method: ' . $_SERVER['REQUEST_METHOD']);
     error_log('POST data: ' . print_r($_POST, true));
+    error_log('Raw input: ' . file_get_contents('php://input'));
     
     // Verify nonce if you want extra security
     // if (!wp_verify_nonce($_POST['nonce'], 'diary_nonce')) {
     //     wp_die('Security check failed');
     // }
 
-    if (!isset($_POST['session_ids'])) {
-        error_log('No session_ids in POST data');
+    if (!isset($_POST['diary_sessions']) && !isset($_POST['session_ids'])) {
+        error_log('No diary_sessions or session_ids in POST data');
+        ob_clean(); // Clean output before JSON response
         wp_send_json_error('No session IDs provided');
         return;
     }
 
-    $session_ids = json_decode(stripslashes($_POST['session_ids']), true);
+    // Accept both parameter names for compatibility
+    $session_data = isset($_POST['diary_sessions']) ? $_POST['diary_sessions'] : $_POST['session_ids'];
+    $session_ids = json_decode(stripslashes($session_data), true);
     
     if (!is_array($session_ids) || empty($session_ids)) {
         error_log('Invalid session_ids: ' . print_r($session_ids, true));
+        ob_clean(); // Clean output before JSON response
         wp_send_json_error('No valid session IDs provided');
         return;
     }
@@ -758,6 +953,10 @@ function handle_get_diary_sessions() {
     }
     
     error_log('Returning ' . count($sessions) . ' sessions: ' . print_r($sessions, true));
+    
+    // Clean any output that might have been generated
+    ob_clean();
+    
     wp_send_json_success($sessions);
 }
 
@@ -825,23 +1024,35 @@ function mira_agenda_grid_old_enqueue_assets() {
       true
   );
 
-  // Enqueue MyDiary CSS
-  wp_enqueue_style(
-      'mira-mydiary-style',
-      plugins_url('assets/css/mydiary.css', __FILE__),
-      array(),
-      DEVMODE ? time() : VERSION,
-      'all'
-  );
+  // Conditionally enqueue MyDiary assets only if enabled
+  if (mira_agenda_is_my_diary_enabled()) {
+    // Enqueue MyDiary CSS
+    wp_enqueue_style(
+        'mira-mydiary-style',
+        plugins_url('assets/css/mydiary.css', __FILE__),
+        array(),
+        DEVMODE ? time() : VERSION,
+        'all'
+    );
 
-  // Enqueue MyDiary JS
-  wp_enqueue_script(
-      'mira-mydiary-script',
-      plugin_dir_url(__FILE__) . 'assets/js/mydiary.js',
-      array(),
-      DEVMODE ? time() : VERSION,
-      true
-  );
+    // Enqueue MyDiary JS
+    wp_enqueue_script(
+        'mira-mydiary-script',
+        plugin_dir_url(__FILE__) . 'assets/js/mydiary.js',
+        array(),
+        DEVMODE ? time() : VERSION,
+        true
+    );
+    
+    // Localize script to provide AJAX URL to frontend
+    wp_localize_script('mira-mydiary-script', 'mira_diary_ajax', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('diary_nonce')
+    ));
+    
+    // Add simple debugging script
+    wp_add_inline_script('mira-mydiary-script', 'console.log("MyDiary JS loaded successfully"); console.log("AJAX URL:", mira_diary_ajax.ajaxurl);');
+  }
 
   // Enqueue unload policy fix (loads early to fix WP Bakery beforeunload issues)
   wp_enqueue_script(
@@ -882,7 +1093,10 @@ function mira_agenda_set_permissions_policy() {
         // header('Permissions-Policy: unload=*');
         
         // Instead, we'll use a more targeted approach via JavaScript
-        echo "<script>console.log('Mira Unload Fix: Script enqueued for WP Bakery context');</script>\n";
+        // Only output this during normal page loads, not AJAX requests
+        if (!wp_doing_ajax()) {
+            echo "<script>console.log('Mira Unload Fix: Script enqueued for WP Bakery context');</script>\n";
+        }
     }
 }
 add_action( 'init', 'mira_agenda_set_permissions_policy', 1 );

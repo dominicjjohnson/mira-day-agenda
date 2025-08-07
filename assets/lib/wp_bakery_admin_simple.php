@@ -1,6 +1,11 @@
 <?php
 /**
- * WP Bakery Page Builder Element for Agenda Grid
+ * WP Bakery Page Builder Elements for Mira Day Agenda
+ * 
+ * This file registers the following WP Bakery elements:
+ * 1. Agenda Grid - [agenda-grid] shortcode with visual editor
+ * 2. My Diary - [display-my-diary] shortcode with visual editor
+ * 
  * Simple, clean implementation
  */
 
@@ -175,6 +180,61 @@ add_action('vc_before_init', function() {
                 ),
             ),
         ));
+
+        // Register My Diary element
+        vc_map(array(
+            'name'     => 'My Diary',
+            'base'     => 'display-my-diary',
+            'category' => 'Content',
+            'icon'     => 'icon-wpb-ui-accordion',
+            'description' => 'Display user\'s personal agenda diary',
+            'params'   => array(
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Display Style',
+                    'param_name'  => 'style',
+                    'description' => 'How to display diary items',
+                    'value'       => array('Grid' => 'grid', 'List' => 'list'),
+                    'std'         => 'grid',
+                    'admin_label' => true,
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Show Empty Message',
+                    'param_name'  => 'show_empty_message',
+                    'description' => 'Display message when diary is empty',
+                    'value'       => array('Yes' => 'yes', 'No' => 'no'),
+                    'std'         => 'yes',
+                ),
+                array(
+                    'type'        => 'textfield',
+                    'heading'     => 'Custom Empty Message',
+                    'param_name'  => 'empty_message',
+                    'description' => 'Custom text to show when diary is empty (optional)',
+                    'value'       => 'Your diary is empty. Add sessions from the agenda to see them here.',
+                    'dependency'  => array(
+                        'element' => 'show_empty_message',
+                        'value'   => array('yes'),
+                    ),
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Show Session Details',
+                    'param_name'  => 'show_details',
+                    'description' => 'Display session descriptions and details',
+                    'value'       => array('Yes' => 'yes', 'No' => 'no'),
+                    'std'         => 'yes',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Show Remove Buttons',
+                    'param_name'  => 'show_remove_buttons',
+                    'description' => 'Allow users to remove items from diary',
+                    'value'       => array('Yes' => 'yes', 'No' => 'no'),
+                    'std'         => 'yes',
+                ),
+            ),
+        ));
     }
 });
 
@@ -188,6 +248,36 @@ add_filter('shortcode_atts_agenda-grid', function($out, $pairs, $atts) {
     // Ensure display_seminar_duration defaults to 'no' when blank or not set
     if (empty($out['display_seminar_duration']) || $out['display_seminar_duration'] === '') {
         $out['display_seminar_duration'] = 'no';
+    }
+    
+    return $out;
+}, 10, 3);
+
+// Filter to ensure proper defaults for My Diary shortcode
+add_filter('shortcode_atts_display-my-diary', function($out, $pairs, $atts) {
+    // Ensure style defaults to 'grid' when blank or not set
+    if (empty($out['style']) || $out['style'] === '') {
+        $out['style'] = 'grid';
+    }
+    
+    // Ensure show_empty_message defaults to 'yes' when blank or not set
+    if (empty($out['show_empty_message']) || $out['show_empty_message'] === '') {
+        $out['show_empty_message'] = 'yes';
+    }
+    
+    // Ensure show_details defaults to 'yes' when blank or not set
+    if (empty($out['show_details']) || $out['show_details'] === '') {
+        $out['show_details'] = 'yes';
+    }
+    
+    // Ensure show_remove_buttons defaults to 'yes' when blank or not set
+    if (empty($out['show_remove_buttons']) || $out['show_remove_buttons'] === '') {
+        $out['show_remove_buttons'] = 'yes';
+    }
+    
+    // Set default empty message if not provided
+    if (empty($out['empty_message']) || $out['empty_message'] === '') {
+        $out['empty_message'] = 'Your diary is empty. Add sessions from the agenda to see them here.';
     }
     
     return $out;

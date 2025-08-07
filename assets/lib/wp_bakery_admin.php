@@ -1,148 +1,388 @@
 <?php
 
-if (function_exists('vc_map')) {
-    vc_map(array(
-        'name'     => 'MM Agenda Grid',
-        'base'     => 'agenda-grid',
-        'category' => 'Content',
-        'params'   => array(
-            array(
-                "type"        => "textfield",
-                "heading"     => __("Date Slug", 'vc_extend'),
-                "param_name"  => "day",
-                "description" => __("Enter the date slug (max 25 chars)", 'vc_extend'),
-                "admin_label" => true,
-                "maxlength"   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'All Tracks Slug',
-                'param_name'  => 'all-tracks',
-                'description' => 'Enter the slug for "All Tracks" (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 1 Slug',
-                'param_name'  => 'track1',
-                'description' => 'Enter the slug for Track 1 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 2 Slug',
-                'param_name'  => 'track2',
-                'description' => 'Enter the slug for Track 2 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 3 Slug',
-                'param_name'  => 'track3',
-                'description' => 'Enter the slug for Track 3 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 4 Slug',
-                'param_name'  => 'track4',
-                'description' => 'Enter the slug for Track 4 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 5 Slug',
-                'param_name'  => 'track5',
-                'description' => 'Enter the slug for Track 5 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 6 Slug',
-                'param_name'  => 'track6',
-                'description' => 'Enter the slug for Track 6 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 7 Slug',
-                'param_name'  => 'track7',
-                'description' => 'Enter the slug for Track 7 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'textfield',
-                'heading'     => 'Track 8 Slug',
-                'param_name'  => 'track8',
-                'description' => 'Enter the slug for Track 8 (max 25 chars).',
-                'admin_label' => true,
-                'maxlength'   => 25,
-            ),
-            array(
-                'type'        => 'dropdown',
-                'heading'     => 'Border',
-                'param_name'  => 'border',
-                'description' => 'Display border around the agenda grid.',
-                'value'       => array(
-                    'Yes' => 'yes',
-                    'No'  => 'no',
-                ),
-                'std'         => 'yes',
-                'admin_label' => true,
-                'save_always' => true,
-            ),
-            array(
-                'type'        => 'dropdown',
-                'heading'     => 'Display Heading Bar',
-                'param_name'  => 'display_heading_bar',
-                'description' => 'Show the heading bar at the top of the agenda.',
-                'value'       => array(
-                    'Yes' => 'yes',
-                    'No'  => 'no',
-                ),
-                'std'         => 'yes',
-                'admin_label' => true,
-                'save_always' => true,
-            ),
-            array(
-                'type'        => 'dropdown',
-                'heading'     => 'Show End Time',
-                'param_name'  => 'show_end_time',
-                'description' => 'Display the end time for each session.',
-                'value'       => array(
-                    'Yes' => 'true',
-                    'No'  => 'false',
-                ),
-                'std'         => 'false',
-                'admin_label' => true,
-                'save_always' => true,
-            ),
-            array(
-                'type'        => 'dropdown',
-                'heading'     => 'Time Slot Side',
-                'param_name'  => 'time_slot_side',
-                'description' => 'Display time slots on the side.',
-                'value'       => array(
-                    'Yes' => 'true',
-                    'No'  => 'false',
-                ),
-                'std'         => 'false',
-                'admin_label' => true,
-                'save_always' => true,
-            ),
-            // Additional fields...
-
-        ),
+// Helper function to get date taxonomy terms for dropdown
+function get_date_taxonomy_options() {
+    $options = array('Select Date' => '');
+    
+    // Check if taxonomy exists first
+    if (!taxonomy_exists('date')) {
+        $options['No dates available'] = '';
+        return $options;
+    }
+    
+    $terms = get_terms(array(
+        'taxonomy' => 'date',
+        'hide_empty' => false,
+        'orderby' => 'name',
+        'order' => 'ASC'
     ));
+    
+    if (!is_wp_error($terms) && !empty($terms)) {
+        foreach ($terms as $term) {
+            $options[$term->name] = $term->slug;
+        }
+    } else {
+        $options['No dates available'] = '';
+    }
+    
+    return $options;
 }
+
+// Helper function to get track taxonomy terms for dropdown
+function get_track_taxonomy_options() {
+    $options = array('Select Track' => '');
+    
+    // Check if taxonomy exists first
+    if (!taxonomy_exists('track')) {
+        $options['No tracks available'] = '';
+        return $options;
+    }
+    
+    $terms = get_terms(array(
+        'taxonomy' => 'track',
+        'hide_empty' => false,
+        'orderby' => 'name',
+        'order' => 'ASC'
+    ));
+    
+    if (!is_wp_error($terms) && !empty($terms)) {
+        foreach ($terms as $term) {
+            $options[$term->name] = $term->slug;
+        }
+    } else {
+        $options['No tracks available'] = '';
+    }
+    
+    return $options;
+}
+
+// Helper function to get all tracks options including special "All Tracks" option
+function get_all_tracks_options() {
+    $options = array('Select All Tracks Option' => '');
+    
+    // Add a default "All Tracks" option
+    $options['All Tracks'] = 'all-tracks';
+    
+    // Check if taxonomy exists first
+    if (!taxonomy_exists('track')) {
+        return $options;
+    }
+    
+    // Add existing track terms as potential "all tracks" options
+    $terms = get_terms(array(
+        'taxonomy' => 'track',
+        'hide_empty' => false,
+        'orderby' => 'name',
+        'order' => 'ASC'
+    ));
+    
+    if (!is_wp_error($terms) && !empty($terms)) {
+        foreach ($terms as $term) {
+            $options['All ' . $term->name] = $term->slug;
+        }
+    }
+    
+    return $options;
+}
+
+// Force WP Bakery to reload element by removing and re-registering
+if (function_exists('vc_remove_element')) {
+    vc_remove_element('agenda-grid');
+}
+
+// Register WP Bakery element after taxonomies are loaded
+add_action('vc_before_init', function() {
+    error_log('WP Bakery: vc_before_init hook fired');
+    error_log('WP Bakery: vc_map function exists: ' . (function_exists('vc_map') ? 'YES' : 'NO'));
+    error_log('WP Bakery: user can edit posts: ' . (current_user_can('edit_posts') ? 'YES' : 'NO'));
+    
+    if (function_exists('vc_map') && current_user_can('edit_posts')) {
+        error_log('WP Bakery: Using vc_before_init hook to register SIMPLE Agenda Grid');
+        
+        // Simple version that should definitely work
+        vc_map(array(
+            'name'     => 'Agenda Grid',
+            'base'     => 'agenda-grid',
+            'category' => 'Content',
+            'icon'     => 'icon-wpb-ui-separator',
+            'description' => 'Display agenda for a conference date',
+            'params'   => array(
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Conference Date',
+                    'param_name'  => 'day',
+                    'description' => 'Select the conference date to display.',
+                    'value'       => get_date_taxonomy_options(),
+                    'std'         => '2025-10-01',
+                    'admin_label' => true,
+                    'save_always' => true,
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'All Tracks Option',
+                    'param_name'  => 'all-tracks',
+                    'description' => 'Select the "All Tracks" option or a specific track for the all-tracks display.',
+                    'value'       => get_all_tracks_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 1',
+                    'param_name'  => 'track1',
+                    'description' => 'Select Track 1 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 2',
+                    'param_name'  => 'track2',
+                    'description' => 'Select Track 2 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 3',
+                    'param_name'  => 'track3',
+                    'description' => 'Select Track 3 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 4',
+                    'param_name'  => 'track4',
+                    'description' => 'Select Track 4 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 5',
+                    'param_name'  => 'track5',
+                    'description' => 'Select Track 5 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 6',
+                    'param_name'  => 'track6',
+                    'description' => 'Select Track 6 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 7',
+                    'param_name'  => 'track7',
+                    'description' => 'Select Track 7 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Track 8',
+                    'param_name'  => 'track8',
+                    'description' => 'Select Track 8 to display.',
+                    'value'       => get_track_taxonomy_options(),
+                    'admin_label' => true,
+                    'group'       => 'Tracks',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Border',
+                    'param_name'  => 'border',
+                    'description' => 'Display border around the agenda grid.',
+                    'value'       => array(
+                        'Yes' => 'yes',
+                        'No'  => 'no',
+                    ),
+                    'std'         => 'yes',
+                    'admin_label' => true,
+                    'save_always' => true,
+                    'group'       => 'Display Options',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Display Heading Bar',
+                    'param_name'  => 'display_heading_bar',
+                    'description' => 'Show the heading bar at the top of the agenda.',
+                    'value'       => array(
+                        'Yes' => 'yes',
+                        'No'  => 'no',
+                    ),
+                    'std'         => 'yes',
+                    'admin_label' => true,
+                    'save_always' => true,
+                    'group'       => 'Display Options',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Show End Time',
+                    'param_name'  => 'show_end_time',
+                    'description' => 'Display the end time for each session.',
+                    'value'       => array(
+                        'Yes' => 'true',
+                        'No'  => 'false',
+                    ),
+                    'std'         => 'false',
+                    'admin_label' => true,
+                    'save_always' => true,
+                    'group'       => 'Display Options',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Time Slot Side',
+                    'param_name'  => 'time_slot_side',
+                    'description' => 'Display time slots on the side.',
+                    'value'       => array(
+                        'Yes' => 'true',
+                        'No'  => 'false',
+                    ),
+                    'std'         => 'false',
+                    'admin_label' => true,
+                    'save_always' => true,
+                    'group'       => 'Display Options',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Display Seminar Type',
+                    'param_name'  => 'display_seminar_type',
+                    'description' => 'Show seminar types (taxonomy "type") in the agenda.',
+                    'value'       => array(
+                        'Yes' => 'yes',
+                        'No'  => 'no',
+                    ),
+                    'std'         => 'no',
+                    'admin_label' => true,
+                    'save_always' => true,
+                    'group'       => 'Display Options',
+                ),
+                array(
+                    'type'        => 'dropdown',
+                    'heading'     => 'Display Seminar Duration',
+                    'param_name'  => 'display_seminar_duration',
+                    'description' => 'Show session duration/time in the agenda.',
+                    'value'       => array(
+                        'Yes' => 'yes',
+                        'No'  => 'no',
+                    ),
+                    'std'         => 'no',
+                    'admin_label' => true,
+                    'save_always' => true,
+                    'group'       => 'Display Options',
+                ),
+            ),
+        ));
+        
+        error_log('WP Bakery: MM Agenda Grid element successfully registered');
+        
+        // Debug: Check WP Bakery version
+        if (defined('WPB_VC_VERSION')) {
+            error_log('WP Bakery Version: ' . WPB_VC_VERSION);
+        }
+        
+        // Test immediate retrieval
+        if (function_exists('vc_get_all_shared_templates')) {
+            error_log('WP Bakery: vc_get_all_shared_templates available');
+        }
+        
+        // Debug: List all registered elements after a delay
+        wp_schedule_single_event(time() + 2, 'check_vc_elements');
+        
+        // Debug: List all registered elements
+        if (function_exists('vc_map_get_all')) {
+            $all_elements = vc_map_get_all();
+            if (isset($all_elements['agenda-grid'])) {
+                error_log('WP Bakery: agenda-grid found in registered elements');
+            } else {
+                error_log('WP Bakery: agenda-grid NOT found in registered elements');
+                error_log('WP Bakery: Available elements count: ' . count($all_elements));
+                $element_names = array_keys($all_elements);
+                error_log('WP Bakery: First 10 elements: ' . implode(', ', array_slice($element_names, 0, 10)));
+            }
+        }
+    } else {
+        error_log('WP Bakery: vc_map function not available or user cannot edit posts');
+    }
+}, 20); // Priority 20 to ensure taxonomies are registered first
+
+// Alternative registration hook for newer WP Bakery versions
+add_action('init', function() {
+    if (function_exists('vc_map') && !did_action('vc_before_init')) {
+        error_log('WP Bakery: Using init hook as fallback for MM Agenda Grid registration');
+        // Same registration code as above...
+        // We'll keep this simple for now and just log that we tried
+    }
+}, 25);
+
+// Try a more direct approach - register on init with higher priority
+add_action('init', function() {
+    if (function_exists('vc_map')) {
+        error_log('WP Bakery: Attempting direct registration on init hook');
+        vc_map(array(
+            'name'     => 'TEST Agenda Grid',
+            'base'     => 'test-agenda-grid',
+            'category' => 'Content',
+            'icon'     => 'icon-wpb-ui-separator',
+            'description' => 'Test agenda element',
+            'params'   => array(
+                array(
+                    'type'        => 'textfield',
+                    'heading'     => 'Test Parameter',
+                    'param_name'  => 'test_param',
+                    'value'       => 'test',
+                ),
+            ),
+        ));
+        error_log('WP Bakery: TEST element registered on init');
+    }
+}, 15);
+
+// Also try after plugins loaded
+add_action('plugins_loaded', function() {
+    if (function_exists('vc_map')) {
+        error_log('WP Bakery: vc_map available after plugins_loaded');
+    } else {
+        error_log('WP Bakery: vc_map NOT available after plugins_loaded');
+    }
+}, 30);
+
+// Scheduled event to check WP Bakery elements after full load
+add_action('check_vc_elements', function() {
+    if (function_exists('vc_map_get_all')) {
+        $all_elements = vc_map_get_all();
+        if (isset($all_elements['agenda-grid'])) {
+            error_log('WP Bakery DELAYED CHECK: agenda-grid found in registered elements');
+        } else {
+            error_log('WP Bakery DELAYED CHECK: agenda-grid NOT found');
+            error_log('WP Bakery DELAYED CHECK: Total elements: ' . count($all_elements));
+        }
+    }
+});
+
+// Also check immediately after WP Bakery admin init
+add_action('vc_admin_init', function() {
+    error_log('WP Bakery: vc_admin_init hook fired');
+    if (function_exists('vc_map_get_all')) {
+        $all_elements = vc_map_get_all();
+        if (isset($all_elements['agenda-grid'])) {
+            error_log('WP Bakery ADMIN INIT: agenda-grid found');
+        } else {
+            error_log('WP Bakery ADMIN INIT: agenda-grid NOT found');
+        }
+    }
+});
 
 // WPBakery element for Display My Diary
 if (function_exists('vc_map')) {
@@ -150,32 +390,18 @@ if (function_exists('vc_map')) {
         'name'     => 'Display My Diary',
         'base'     => 'display-my-diary',
         'category' => 'Content',
-        'description' => 'Display sessions saved in user\'s personal diary',
         'params'   => array(
             array(
                 'type'        => 'dropdown',
-                'heading'     => 'Display Style',
-                'param_name'  => 'style',
-                'description' => 'Choose how to display the diary sessions.',
+                'heading'     => 'Layout Style',
+                'param_name'  => 'layout',
+                'description' => 'Choose how to display the diary entries.',
                 'value'       => array(
-                    'Grid Layout' => 'grid',
-                    'List Layout' => 'list',
-                    'Compact List' => 'compact',
+                    'Grid'    => 'grid',
+                    'List'    => 'list',
+                    'Compact' => 'compact',
                 ),
-                'std'         => 'grid',
-                'admin_label' => true,
-                'save_always' => true,
-            ),
-            array(
-                'type'        => 'dropdown',
-                'heading'     => 'Show Empty Message',
-                'param_name'  => 'show_empty_message',
-                'description' => 'Display a message when no sessions are in the diary.',
-                'value'       => array(
-                    'Yes' => 'yes',
-                    'No'  => 'no',
-                ),
-                'std'         => 'yes',
+                'std'         => 'list',
                 'admin_label' => true,
                 'save_always' => true,
             ),
@@ -200,154 +426,8 @@ if (function_exists('vc_map')) {
                 'admin_label' => true,
                 'save_always' => true,
             ),
-            array(
-                'type'        => 'dropdown',
-                'heading'     => 'Show Remove Buttons',
-                'param_name'  => 'show_remove_buttons',
-                'description' => 'Include remove buttons for each session.',
-                'value'       => array(
-                    'Yes' => 'yes',
-                    'No'  => 'no',
-                ),
-                'std'         => 'yes',
-                'admin_label' => true,
-                'save_always' => true,
-            ),
         ),
     ));
 }
-
-
-add_action('wp_ajax_save_agenda_grid', 'save_agenda_grid');
-add_action('wp_ajax_nopriv_save_agenda_grid', 'save_agenda_grid');
-
-function save_agenda_grid() {
-    if (!isset($_POST['track_data']) || !is_array($_POST['track_data'])) {
-        wp_send_json_error('Invalid data.');
-    }
-
-    // Save the track and date values
-    update_option('mm_agenda_tracks', $_POST['track_data']);
-    update_option('mm_agenda_date', $_POST['date_slug']);
-
-    // Retrieve values to return in response
-    $tracks = get_option('mm_agenda_tracks', array());
-    $date   = get_option('mm_agenda_date', '');
-
-    // Send JSON response back
-    wp_send_json_success(array(
-        'tracks' => $tracks,
-        'date'   => $date
-    ));
-}
-
-// Inline admin JS for saving agenda grid
-add_action('admin_footer', function () {
-    ?>
-    <script type="text/javascript">
-        jQuery(document).ready(function ($) {
-            $('.vc_ui-button.save-agenda').on('click', function () {
-                var trackValues = [];
-                
-                $('.vc_param_group[data-param-type="textfield"]').each(function () {
-                    trackValues.push($(this).val());
-                });
-
-                $.post(ajaxurl, {
-                    action: 'save_agenda_grid',
-                    track_data: trackValues,
-                    date_slug: dateSlug
-                }, function (response) {
-                    if (response.success) {
-                        $('#saved-data').html('<h3>Saved Agenda</h3><p><strong>Date:</strong> ' + response.data.date + '</p><ul></ul>');
-                        
-                        response.data.tracks.forEach(function(track) {
-                            $('#saved-data ul').append('<li>' + track + '</li>');
-                        });
-
-                        alert('Saved successfully.');
-                    } else {
-                        alert('Error saving data.');
-                    }
-                });
-            });
-        });
-
-    </script>
-    <?php
-});
-
-
-
-
-
-/*
-$terms = get_terms(array(
-    'taxonomy'   => 'track',
-    'hide_empty' => false,
-));
-
-if (!is_wp_error($terms)) {
-    foreach ($terms as $term) {
-        echo '<p>' . esc_html($term->name) . '</p>';
-    }
-} else {
-    echo 'Error: ' . esc_html($terms->get_error_message());
-}
-*/
-/* This doesn't work, so commented out - f' knows why
-    //Day array
-    $date_args = array(
-		'hide_empty' => false
-	);
-	$dates = get_terms( 'date', $date_args);
-
-    //Track array
-    $terms_args = array(
-		'hide_empty' => false
-	);
-	$tracks = get_terms( 'track', $terms_args);
-
-
-    // Prepare dropdown options
-
-   //Date array
-    $termsdate_args = array(
-		'hide_empty' => false
-	);
-	$termsdate = get_terms( 'date', $termsdate_args);
-
-		
-	if ( ! empty( $termsdate ) && ! is_wp_error( $termsdate ) ){
-		foreach ( $termsdate as $termdate ) {
-			$speaker_group_id = $termdate->term_id;
-			$speaker_group_display = $termdate->name . ' ('.$termdate->count.')'; 
-		}
-	}
-
-
-    $get_termsdate = get_terms('date');
-
-    $date_categories = array();
-    $date_categories[' '] = 'empty';
-    $date_categories['All'] = 'all';
-
-	foreach($get_termsdate as $termdate) {   
-	  $date_categories[$termdate->name] = $termdate->slug;
-	}
-
-    $track_options = array(
-        array('label' => 'Select Track', 'value' => ''),
-        array('label' => 'ALL Tracks', 'value' => 'all-tracks'),
-    );
-    if (!is_wp_error($tracks)) {
-        foreach ($tracks as $track) {
-            $track_options[] = array(
-                'label' => $track->name,
-                'value' => $track->slug,
-            );
-        }
-    }
-    */
 
 ?>

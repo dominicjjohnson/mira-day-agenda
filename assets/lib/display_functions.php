@@ -34,6 +34,11 @@ function generate_mydiary_button($seminar_id) {
         return '';
     }
     
+    // Check if My Diary feature is enabled in settings
+    if (function_exists('mira_agenda_is_my_diary_enabled') && !mira_agenda_is_my_diary_enabled()) {
+        return ''; // Return empty string if My Diary is disabled
+    }
+    
     return '<button class="mydiary-btn mydiary-add" 
                 data-seminar-id="' . esc_attr($seminar_id) . '" 
                 type="button" 

@@ -5,6 +5,18 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     
+    // Safe AJAX URL detection
+    function getAjaxUrl() {
+        if (typeof mira_diary_ajax !== 'undefined' && mira_diary_ajax.ajaxurl) {
+            return mira_diary_ajax.ajaxurl;
+        }
+        if (typeof window.ajaxurl !== 'undefined') {
+            return window.ajaxurl;
+        }
+        // Fallback to WordPress standard
+        return '/wp-admin/admin-ajax.php';
+    }
+    
     // Cookie management functions
     function setCookie(name, value, days) {
         let expires = "";
@@ -310,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
             diaryItemsLength: diaryItems.length,
             container: !!container, 
             emptyDiv: !!emptyDiv,
-            ajaxurl: typeof ajaxurl !== 'undefined' ? ajaxurl : 'undefined'
+            ajaxurl: getAjaxUrl()
         });
         
         // Debug: Show current cookies
@@ -352,16 +364,24 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = '<div class="my-diary-loading">Loading your diary sessions...</div>';
 
         // Check if we have WordPress AJAX available
-        if (typeof ajaxurl !== 'undefined' && ajaxurl) {
-            console.log('Using WordPress AJAX to fetch session data from:', ajaxurl);
+        const ajaxUrl = getAjaxUrl();
+        
+        if (ajaxUrl) {
+            console.log('Using WordPress AJAX to fetch session data from:', ajaxUrl);
             // Fetch session data for each diary item
-            fetchSessionsData(diaryItems)
+            fetchSessionsData(diaryItems, ajaxUrl)
                 .then(sessions => {
                     console.log('Fetched sessions successfully:', sessions);
                     renderDiarySessions(sessions, container, config);
                 })
                 .catch(error => {
                     console.error('Error loading diary sessions:', error);
+                    console.error('Error details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        ajaxurl: getAjaxUrl(),
+                        sessionIds: diaryItems
+                    });
                     // Fallback to mock data or simple display
                     console.log('Falling back to simple display');
                     renderSimpleDiarySessions(diaryItems, container, config);
@@ -374,16 +394,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Fetch session data from WordPress
-    function fetchSessionsData(sessionIds) {
+    function fetchSessionsData(sessionIds, ajaxUrl) {
+        const fetchUrl = ajaxUrl || getAjaxUrl();
+        
         return new Promise((resolve, reject) => {
             console.log('fetchSessionsData called with IDs:', sessionIds);
+            console.log('Using AJAX URL:', fetchUrl);
+            
             // Use WordPress AJAX to fetch session data
             const data = new FormData();
             data.append('action', 'get_diary_sessions');
             data.append('session_ids', JSON.stringify(sessionIds));
-            data.append('nonce', getDiaryNonce());
+            // Note: nonce is optional since verification is disabled in PHP handler
+            const nonce = getDiaryNonce();
+            if (nonce) {
+                data.append('nonce', nonce);
+            }
 
-            const fetchUrl = ajaxurl || '/wp-admin/admin-ajax.php';
             console.log('Fetching from URL:', fetchUrl);
 
             fetch(fetchUrl, {
@@ -432,7 +459,20 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '</div>';
             html += '<div class="diary-session-title">Session ID: ' + sessionId + '</div>';
             if (config.showDetails) {
-                html += '<div class="diary-session-details">Session details are loading... Please refresh the page if this persists. You can view the full session details on the main agenda.</div>';
+                html += '<div class="diary-session-details">';
+                html += '<p style="color: #666; font-style: italic;">⚠️ Unable to load full session details. This may happen if:</p>';
+                html += '<ul style="margin: 10px 0; padding-left: 20px; color: #666;">';
+                html += '<li>The session data is loading in the background</li>';
+                html += '<li>There are temporary connectivity issues</li>';
+                html += '<li>The session may have been unpublished</li>';
+                html += '</ul>';
+                html += '<p style="color: #666;">You can:</p>';
+                html += '<ul style="margin: 10px 0; padding-left: 20px; color: #666;">';
+                html += '<li>Refresh this page to reload session data</li>';
+                html += '<li>Check the main agenda for full session details</li>';
+                html += '<li>Remove sessions that are no longer available</li>';
+                html += '</ul>';
+                html += '</div>';
             }
             html += '</div>';
         });
@@ -446,19 +486,30 @@ document.addEventListener('DOMContentLoaded', function() {
             attachRemoveButtonListeners();
         }
         
-        // Show a helpful message about refreshing
+        // Try to fetch data again after a delay
         setTimeout(function() {
-            const refreshButton = document.querySelector('.my-diary-refresh-btn');
-            if (refreshButton) {
-                refreshButton.style.animation = 'pulse 2s infinite';
-                refreshButton.title = 'Click to try loading session details again';
+            console.log('Attempting to retry session data fetch...');
+            const retryAjaxUrl = getAjaxUrl();
+            
+            if (retryAjaxUrl) {
+                fetchSessionsData(sessionIds, retryAjaxUrl)
+                    .then(sessions => {
+                        console.log('Retry successful, updating display with proper session data');
+                        renderDiarySessions(sessions, container, config);
+                    })
+                    .catch(error => {
+                        console.log('Retry failed, keeping simple display:', error);
+                    });
             }
-        }, 2000);
+        }, 2000); // Wait 2 seconds then try again
     }
 
     // Get nonce for AJAX requests
     function getDiaryNonce() {
-        // This would typically be localized from PHP
+        // Try localized nonce first, then meta tag fallback
+        if (typeof mira_diary_ajax !== 'undefined' && mira_diary_ajax.nonce) {
+            return mira_diary_ajax.nonce;
+        }
         return document.querySelector('meta[name="diary-nonce"]')?.getAttribute('content') || '';
     }
 
@@ -803,3 +854,63 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Test function for debugging AJAX
+function testDiaryAjax() {
+    console.log('=== AJAX TEST START ===');
+    console.log('mira_diary_ajax object:', typeof mira_diary_ajax !== 'undefined' ? mira_diary_ajax : 'NOT DEFINED');
+    
+    if (typeof mira_diary_ajax === 'undefined') {
+        console.error('ERROR: mira_diary_ajax not available');
+        alert('ERROR: AJAX variables not loaded. Check wp_localize_script.');
+        return;
+    }
+    
+    console.log('AJAX URL:', mira_diary_ajax.ajaxurl);
+    console.log('Nonce:', mira_diary_ajax.nonce);
+    
+    const formData = new FormData();
+    formData.append('action', 'get_diary_sessions');
+    formData.append('nonce', mira_diary_ajax.nonce);
+    formData.append('diary_sessions', '["2732", "2729", "2726"]'); // Real session IDs
+    
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+    }
+    
+    console.log('Sending AJAX request...');
+    fetch(mira_diary_ajax.ajaxurl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        console.log('Response ok:', response.ok);
+        return response.text();
+    })
+    .then(data => {
+        console.log('Raw response:', data);
+        try {
+            const parsed = JSON.parse(data);
+            console.log('Parsed JSON:', parsed);
+            
+            if (parsed.success && parsed.data) {
+                console.log('✓ AJAX Success! Retrieved', parsed.data.length, 'sessions');
+                console.log('Session details:', parsed.data);
+                alert('AJAX test successful! Check console for session details.');
+            } else {
+                console.log('✗ AJAX returned error:', parsed.data || 'Unknown error');
+                alert('AJAX returned error: ' + (parsed.data || 'Unknown error'));
+            }
+        } catch (e) {
+            console.log('Could not parse as JSON:', e.message);
+            alert('JSON parse error: ' + e.message);
+        }
+    })
+    .catch(error => {
+        console.error('AJAX error:', error);
+        alert('AJAX error: ' + error.message);
+    });
+}
