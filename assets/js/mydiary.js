@@ -768,5 +768,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+
+        // Handle orientation change on mobile for better modal positioning
+        window.addEventListener('orientationchange', function() {
+            const openModals = document.querySelectorAll('.diary-modal[style*="display: block"], .diary-modal[style*="display:block"]');
+            if (openModals.length > 0) {
+                // Small delay to ensure proper reflow after orientation change
+                setTimeout(function() {
+                    // Modals will automatically reposition due to CSS centering
+                    // Force a repaint to ensure proper positioning
+                    openModals.forEach(modal => {
+                        const content = modal.querySelector('.modal-content');
+                        if (content) {
+                            content.style.display = 'none';
+                            content.offsetHeight; // Trigger reflow
+                            content.style.display = 'block';
+                        }
+                    });
+                }, 150);
+            }
+        });
+
+        // Add touch handling for better mobile experience
+        const moreDetailsLinks = document.querySelectorAll('.more-details-link');
+        moreDetailsLinks.forEach(link => {
+            // Prevent double-tap zoom on mobile
+            link.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                // Trigger click after preventing default
+                setTimeout(() => {
+                    this.click();
+                }, 10);
+            });
+        });
     }
 });

@@ -492,7 +492,7 @@
 /* Modal overlay */
 .diary-modal {
     position: fixed !important;
-    z-index: 9999 !important;
+    z-index: 999999 !important;
     left: 0 !important;
     top: 0 !important;
     width: 100vw !important;
@@ -507,14 +507,21 @@
 .diary-modal .modal-content {
     position: relative;
     background-color: #fefefe;
-    margin: 5% auto;
+    margin: 0;
     padding: 0;
     border: 1px solid #888;
     width: 90%;
     max-width: 700px;
+    max-height: 85vh;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     animation: modalSlideIn 0.3s ease-out;
+    /* Position higher up on screen */
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
 }
 
 /* Modal animation */
@@ -538,7 +545,7 @@
     font-weight: bold;
     color: #aaa;
     cursor: pointer;
-    z-index: 10000;
+    z-index: 1000000;
     line-height: 1;
     transition: color 0.3s ease;
 }
@@ -551,10 +558,37 @@
 
 /* Modal body */
 .diary-modal .modal-body {
-    margin: 20px;
-    padding-right: 40px;
+    margin: 0;
+    padding: 25px;
+    padding-right: 50px;
     line-height: 1.6;
     color: #333;
+    max-height: calc(85vh - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Custom scrollbar for better UX */
+    scrollbar-width: thin;
+    scrollbar-color: #ccc #f0f0f0;
+}
+
+/* Webkit scrollbar styling */
+.diary-modal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.diary-modal .modal-body::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+}
+
+.diary-modal .modal-body::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.diary-modal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #999;
 }
 
 /* Modal session title */
@@ -638,44 +672,99 @@
 @media (max-width: 768px) {
     .diary-modal .modal-content {
         width: 95%;
-        margin: 10% auto;
+        max-width: none;
+        max-height: 90vh;
+        /* Position higher up on mobile for better thumb reach */
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
     
     .diary-modal .modal-body {
-        margin: 15px;
-        padding-right: 35px;
+        padding: 20px;
+        padding-right: 45px;
+        max-height: calc(90vh - 60px);
     }
     
     .modal-session-title {
         font-size: 1.2em;
         margin-bottom: 12px;
+        padding-right: 25px;
     }
     
     .modal-session-content {
         font-size: 13px;
+    }
+    
+    .diary-modal .close-modal {
+        font-size: 26px;
+        top: 12px;
+        right: 18px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
     }
 }
 
 @media (max-width: 480px) {
     .diary-modal .modal-content {
         width: 98%;
-        margin: 5% auto;
-        border-radius: 4px;
+        max-height: 95vh;
+        border-radius: 8px;
+        /* Mobile positioning - higher up for better accessibility */
+        top: 25%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
     
     .diary-modal .modal-body {
-        margin: 12px;
-        padding-right: 30px;
+        padding: 15px;
+        padding-right: 40px;
+        max-height: calc(95vh - 50px);
     }
     
     .modal-session-title {
         font-size: 1.1em;
         margin-bottom: 10px;
+        padding-right: 20px;
     }
     
     .diary-modal .close-modal {
         font-size: 24px;
-        top: 8px;
-        right: 12px;
+        top: 10px;
+        right: 15px;
+        width: 30px;
+        height: 30px;
+    }
+    
+    .modal-session-time {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .modal-session-content {
+        font-size: 14px;
+    }
+}
+
+/* Enhanced mobile touch targets */
+@media (max-width: 768px) {
+    .diary-modal .close-modal {
+        min-width: 44px;
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    
+    .more-details-link {
+        min-height: 44px;
+        display: inline-block;
+        line-height: 44px;
+        vertical-align: top;
+        touch-action: manipulation;
     }
 }
