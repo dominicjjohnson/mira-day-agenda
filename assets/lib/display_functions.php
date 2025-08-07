@@ -78,6 +78,8 @@ $atts = shortcode_atts([
         'show_end_time' => false,
         'show_session_duration' => false,
         'link_title_to_details' => false,
+        'display_seminar_type' => 'yes',
+        'display_seminar_duration' => 'yes',
         'default_border_color' => '#dedede'
   ], $atts);
   
@@ -101,6 +103,27 @@ $atts = shortcode_atts([
   $show_end_time = filter_var($atts['show_end_time'], FILTER_VALIDATE_BOOLEAN);
   $show_session_duration = filter_var($atts['show_session_duration'], FILTER_VALIDATE_BOOLEAN);
   $link_title_to_details = filter_var($atts['link_title_to_details'], FILTER_VALIDATE_BOOLEAN);
+  
+  // Handle display parameters - check if already boolean (from shortcode conversion) or string (direct usage)
+  if (is_bool($atts['display_seminar_type'] ?? false)) {
+    $display_seminar_type = $atts['display_seminar_type'];
+  } else {
+    $display_seminar_type = (strtolower(esc_html($atts['display_seminar_type'] ?? 'yes')) === 'yes');
+  }
+  
+  if (is_bool($atts['display_seminar_duration'] ?? false)) {
+    $display_seminar_duration = $atts['display_seminar_duration'];
+  } else {
+    $display_seminar_duration = (strtolower(esc_html($atts['display_seminar_duration'] ?? 'yes')) === 'yes');
+  }
+  
+  // ALWAYS DEBUG: Check parameter processing (remove after testing)
+  error_log("=== AGENDA PARAMETER TEST ===");
+  error_log("Raw display_seminar_type: " . ($atts['display_seminar_type'] ?? 'NOT SET') . " (type: " . gettype($atts['display_seminar_type'] ?? null) . ")");
+  error_log("Raw display_seminar_duration: " . ($atts['display_seminar_duration'] ?? 'NOT SET') . " (type: " . gettype($atts['display_seminar_duration'] ?? null) . ")");
+  error_log("Final display_seminar_type: " . ($display_seminar_type ? 'true' : 'false'));
+  error_log("Final display_seminar_duration: " . ($display_seminar_duration ? 'true' : 'false'));
+  error_log("=== END PARAMETER TEST ===");
   
   $default_border_color = "#dddddd";
   
@@ -136,6 +159,8 @@ $atts = shortcode_atts([
       $inputs['show_end_time'] = $show_end_time;
       $inputs['show_session_duration'] = $show_session_duration;
       $inputs['link_title_to_details'] = $link_title_to_details;
+      $inputs['display_seminar_type'] = $display_seminar_type;
+      $inputs['display_seminar_duration'] = $display_seminar_duration;
       $inputs['default_border_color'] = $default_border_color;
 
       $track_count = 0;
@@ -673,30 +698,53 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
   return $sessions;
 }
 
-function make_themes_types_html($sessionID, $minutes, $show_end_time, $start_time, $end_time) {
+function make_themes_types_html($sessionID, $minutes, $show_end_time, $start_time, $end_time, $display_seminar_type = true, $display_seminar_duration = true) {
 
-  // This function should return the themes and types HTML
-  // For now, we will return an empty array
-  $types = get_the_terms($sessionID, 'type');
+  // TEMP DEBUG: Check what's being passed
+  error_log("TEMP DEBUG - make_themes_types_html called with:");
+  error_log("display_seminar_type: " . ($display_seminar_type ? 'true' : 'false') . " (type: " . gettype($display_seminar_type) . ")");
+  error_log("display_seminar_duration: " . ($display_seminar_duration ? 'true' : 'false') . " (type: " . gettype($display_seminar_duration) . ")");
 
-  $type = "";
-  if (is_array($types)) {
-    $type = "<div class='themes'>\n";
-    foreach ($types as $typeObj) {
-      $type .= "<span>".$typeObj->name . "</span>\n";
-    }
-    if ($show_end_time) {
-      $type .= '<i class="fa-solid fa-clock"></i> ' . $start_time . ' - ' . $end_time;
-    }
-    else {
-      $type .= '<i class="fa-solid fa-clock"></i> ' . $minutes. "m";
-    }
-    
-    $type .= "</div>";
+  // Early return if both are disabled
+  if (!$display_seminar_type && !$display_seminar_duration) {
+    error_log("TEMP DEBUG: Both disabled, returning empty string");
+    return "";
   }
-  return $type;  
   
-
+  $types = get_the_terms($sessionID, 'type');
+  $type_content = "";
+  $duration_content = "";
+  
+  // Build type content if enabled and types exist
+  if ($display_seminar_type && is_array($types) && !empty($types)) {
+    foreach ($types as $typeObj) {
+      $type_content .= "<span>".$typeObj->name . "</span>\n";
+    }
+    error_log("TEMP DEBUG: Type content built: " . $type_content);
+  }
+  
+  // Build duration content if enabled
+  if ($display_seminar_duration) {
+    if ($show_end_time) {
+      $duration_content = '<i class="fa-solid fa-clock"></i> ' . $start_time . ' - ' . $end_time;
+    } else {
+      $duration_content = '<i class="fa-solid fa-clock"></i> ' . $minutes. "m";
+    }
+    error_log("TEMP DEBUG: Duration content built: " . $duration_content);
+  }
+  
+  // Only create the div if we have content to show
+  if (!empty($type_content) || !empty($duration_content)) {
+    $result = "<div class='themes'>\n";
+    $result .= $type_content;
+    $result .= $duration_content;
+    $result .= "</div>";
+    error_log("TEMP DEBUG: Final result: " . htmlspecialchars($result));
+    return $result;
+  }
+  
+  error_log("TEMP DEBUG: No content to show, returning empty string");
+  return "";
 }
 
 function get_speaker_block_html ($postid, $track, $all_tracks) {
@@ -768,7 +816,8 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         $speaker_image = get_the_post_thumbnail_url($speaker_post->ID, 'thumbnail');
         $speaker_job = get_post_meta($speaker_post->ID, 'speaker_speaker_job_title', true);
         $speaker_company = get_post_meta($speaker_post->ID, 'speaker_company_name', true);
-        $SPEAKER_BIO_SUMMERY_LENGTH = 40;
+        // Use a shorter limit for speaker bios (half of the main content limit)
+        $SPEAKER_BIO_SUMMERY_LENGTH = function_exists('mira_agenda_get_char_limit') ? (int)(mira_agenda_get_char_limit() / 5) : 40;
         $speaker_bio_full = strip_tags(get_post_field('post_content', $speaker_post->ID));
         $speaker_bio = mb_strlen($speaker_bio_full) > $SPEAKER_BIO_SUMMERY_LENGTH
             ? mb_substr($speaker_bio_full, 0, $SPEAKER_BIO_SUMMERY_LENGTH) . '...'
@@ -891,14 +940,15 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   $time_split = parse_session_time_details($sessions[$rowID]['sessionTime']);
 
   // Display Type and duration if show_end_time = false OR start end time if true
-  $type_html = make_themes_types_html($session_id, $time_split['duration_minutes'], $inputs['show_end_time'], $time_split['start_time'], $time_split['end_time']);
+  $type_html = make_themes_types_html($session_id, $time_split['duration_minutes'], $inputs['show_end_time'], $time_split['start_time'], $time_split['end_time'], $inputs['display_seminar_type'], $inputs['display_seminar_duration']);
   
   $speaker_html = '<span class="session-presenter">'.$sessions[$rowID]['sessionPresenter'].'</span>';
   $post_content = apply_filters('the_content', get_post_field('post_content', $session_id));
 
   $link_on_title = "";
 
-  $ALL_TRACKS_CONTENT_LENGTH = 100;
+  // Get character limit from settings (defaults to 200 if not set)
+  $ALL_TRACKS_CONTENT_LENGTH = function_exists('mira_agenda_get_char_limit') ? mira_agenda_get_char_limit() : 200;
   $full_content = strip_tags($post_content);
   
   // Check if there's meaningful content (more than just whitespace)

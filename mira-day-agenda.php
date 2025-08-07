@@ -100,6 +100,81 @@ add_action('admin_init', function() {
     }
 });
 
+// Add settings page
+add_action('admin_menu', 'mira_agenda_add_admin_menu');
+add_action('admin_init', 'mira_agenda_settings_init');
+
+function mira_agenda_add_admin_menu() {
+    add_options_page(
+        'Mira Day Agenda Settings',
+        'Day Agenda',
+        'manage_options',
+        'mira_day_agenda',
+        'mira_agenda_options_page'
+    );
+}
+
+function mira_agenda_settings_init() {
+    register_setting('mira_agenda_settings', 'mira_agenda_settings');
+
+    add_settings_section(
+        'mira_agenda_settings_section',
+        __('Display Settings', 'mira-day-agenda'),
+        'mira_agenda_settings_section_callback',
+        'mira_agenda_settings'
+    );
+
+    add_settings_field(
+        'more_button_char_limit',
+        __('More Button Character Limit', 'mira-day-agenda'),
+        'mira_agenda_more_button_char_limit_render',
+        'mira_agenda_settings',
+        'mira_agenda_settings_section'
+    );
+}
+
+function mira_agenda_more_button_char_limit_render() {
+    $options = get_option('mira_agenda_settings');
+    $value = isset($options['more_button_char_limit']) ? $options['more_button_char_limit'] : 200;
+    ?>
+    <input type='number' name='mira_agenda_settings[more_button_char_limit]' value='<?php echo esc_attr($value); ?>' min='50' max='1000' step='10'>
+    <p class="description">Number of characters to display before showing the "More" button. Default: 200</p>
+    <?php
+}
+
+function mira_agenda_settings_section_callback() {
+    echo __('Configure how the agenda grid displays content.', 'mira-day-agenda');
+}
+
+function mira_agenda_options_page() {
+    ?>
+    <div class="wrap">
+        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+        <form action='options.php' method='post'>
+            <?php
+            settings_fields('mira_agenda_settings');
+            do_settings_sections('mira_agenda_settings');
+            submit_button();
+            ?>
+        </form>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #f9f9f9; border-left: 4px solid #0073aa;">
+            <h3>Plugin Information</h3>
+            <p><strong>Version:</strong> <?php echo VERSION; ?></p>
+            <p><strong>Development Mode:</strong> <?php echo DEVMODE ? 'Enabled' : 'Disabled'; ?></p>
+            <p><strong>Shortcode:</strong> <code>[agenda-grid day="2025-10-01"]</code></p>
+            <p><strong>WP Bakery Element:</strong> Available in Visual Composer as "Agenda Grid"</p>
+        </div>
+    </div>
+    <?php
+}
+
+// Helper function to get the character limit setting
+function mira_agenda_get_char_limit() {
+    $options = get_option('mira_agenda_settings');
+    return isset($options['more_button_char_limit']) ? (int)$options['more_button_char_limit'] : 200;
+}
+
 function is_mobile() {
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     $mobile_agents = ['Android', 'iPhone', 'iPad', 'iPod', 'Windows Phone'];
