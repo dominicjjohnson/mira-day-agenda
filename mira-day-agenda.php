@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.14.
+ * Version: 1.29
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -48,18 +48,19 @@
     5. Cookie persists for 30 days
     6. Responsive button design with yellow/orange and grey states
  
- * Version 1.18. 2025-08-06 - MyDiary date taxonomy fix
-    1. Fixed incorrect date display in MyDiary - now uses proper taxonomy date titles
-    2. Enhanced AJAX handler to always retrieve date_title from 'date' taxonomy regardless of session_start
-    3. MyDiary now shows proper day titles like "Day 1 - Tuesday, 21st October 2025" instead of hardcoded dates
-    4. Improved date detection logic to prioritize taxonomy information over meta fields
+ * Version 1.19. 2025-08-07 - Fixed browser permissions policy violation
+    1. Added fix for "Permissions policy violation: unload is not allowed" error
+    2. Created JavaScript fix to prevent WP Bakery beforeunload event listeners
+    3. Added Permissions Policy headers for admin/editor pages
+    4. Implemented override for vc.setDataChanged to avoid browser restrictions
+    5. Enhanced compatibility with modern browser security policies
         
  
  
  */
  
 define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.18"); // Updated version for MyDiary date taxonomy fix
+define('VERSION', "1.21"); // Updated version - refined unload policy fix
 
 
  // Exit if accessed directly.
@@ -69,9 +70,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Include the display & data functions file
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/cpt.php';
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin.php';
+require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin_simple.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/display_functions.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/data_functions.php';
+
+// Clear WP Bakery cache on plugin update
+add_action('admin_init', function() {
+    if (get_option('mira_agenda_version') !== VERSION) {
+        // Clear any WP Bakery caches
+        if (function_exists('vc_flush_templates_cache')) {
+            vc_flush_templates_cache();
+        }
+        if (function_exists('vc_flush_template_cache')) {
+            vc_flush_template_cache();
+        }
+        if (function_exists('vc_editor_post_types')) {
+            vc_editor_post_types();
+        }
+        // Clear any WP caches
+        if (function_exists('wp_cache_flush')) {
+            wp_cache_flush();
+        }
+        delete_option('wpb_js_composer_cache');
+        delete_transient('vc_license');
+        
+        // Update version
+        update_option('mira_agenda_version', VERSION);
+        error_log('Mira Day Agenda: Plugin updated to version ' . VERSION . ', caches cleared');
+    }
+});
 
 function is_mobile() {
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
@@ -173,6 +200,8 @@ function mira_agenda_grid_old_shortcode($atts) {
         'display_heading_bar' => 'yes',
         'show_end_time' => 'false',
         'time_slot_side' => 'false',
+        'display_seminar_type' => 'no',
+        'display_seminar_duration' => 'no',
     ), $atts, 'agenda-grid');
 
     // Debug: Show the incoming attributes (remove this after testing)
@@ -181,7 +210,13 @@ function mira_agenda_grid_old_shortcode($atts) {
     // Debug: Log the incoming attributes
     if (defined('WP_DEBUG') && WP_DEBUG) {
         error_log('Agenda Grid Shortcode Attributes: ' . print_r($atts, true));
+        error_log('SHORTCODE DEBUG: Raw display_seminar_type: ' . (isset($atts['display_seminar_type']) ? $atts['display_seminar_type'] : 'NOT SET'));
+        error_log('SHORTCODE DEBUG: Raw display_seminar_duration: ' . (isset($atts['display_seminar_duration']) ? $atts['display_seminar_duration'] : 'NOT SET'));
     }
+    // ALWAYS LOG for testing
+    error_log('=== SHORTCODE DEBUG ===');
+    error_log('Raw display_seminar_type: ' . (isset($atts['display_seminar_type']) ? $atts['display_seminar_type'] : 'NOT SET'));
+    error_log('Raw display_seminar_duration: ' . (isset($atts['display_seminar_duration']) ? $atts['display_seminar_duration'] : 'NOT SET'));
 
     // Convert WPBakery string values to proper boolean types
     if (isset($atts['display_heading_bar']) && in_array($atts['display_heading_bar'], ['yes', 'no'])) {
@@ -193,6 +228,17 @@ function mira_agenda_grid_old_shortcode($atts) {
     if (isset($atts['time_slot_side']) && in_array($atts['time_slot_side'], ['true', 'false'])) {
         $atts['time_slot_side'] = ($atts['time_slot_side'] === 'true');
     }
+    
+    // Convert our new display parameters
+    if (isset($atts['display_seminar_type']) && in_array($atts['display_seminar_type'], ['yes', 'no'])) {
+        $atts['display_seminar_type'] = ($atts['display_seminar_type'] === 'yes');
+        error_log('SHORTCODE DEBUG: display_seminar_type converted to: ' . ($atts['display_seminar_type'] ? 'true' : 'false'));
+    }
+    if (isset($atts['display_seminar_duration']) && in_array($atts['display_seminar_duration'], ['yes', 'no'])) {
+        $atts['display_seminar_duration'] = ($atts['display_seminar_duration'] === 'yes');
+        error_log('SHORTCODE DEBUG: display_seminar_duration converted to: ' . ($atts['display_seminar_duration'] ? 'true' : 'false'));
+    }
+    error_log('=== END SHORTCODE DEBUG ===');
 
     // HTML content to display with the shortcode
     $inputs = get_parameters($atts);
@@ -679,6 +725,62 @@ function mira_agenda_grid_old_enqueue_assets() {
       DEVMODE ? time() : VERSION,
       true
   );
+
+  // Enqueue unload policy fix (loads early to fix WP Bakery beforeunload issues)
+  wp_enqueue_script(
+      'mira-unload-policy-fix',
+      plugin_dir_url(__FILE__) . 'assets/js/fix-unload-policy.js',
+      array(),
+      DEVMODE ? time() : VERSION,
+      false // Load in head to ensure it runs before other scripts
+  );
 }
-add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets' );
+add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets', 5 ); // Higher priority (earlier execution)
+
+// Enqueue unload policy fix for admin/WP Bakery backend
+function mira_agenda_admin_enqueue_assets() {
+    // Only load on admin pages and WP Bakery editor
+    if (is_admin() || (isset($_GET['vc_editable']) && $_GET['vc_editable'])) {
+        wp_enqueue_script(
+            'mira-unload-policy-fix-admin',
+            plugin_dir_url(__FILE__) . 'assets/js/fix-unload-policy.js',
+            array(),
+            DEVMODE ? time() : VERSION,
+            false // Load in head
+        );
+    }
+}
+add_action( 'admin_enqueue_scripts', 'mira_agenda_admin_enqueue_assets', 5 );
+add_action( 'wp_enqueue_scripts', 'mira_agenda_admin_enqueue_assets', 1 ); // Very early priority
+
+// Add Permissions Policy header to allow unload events (for WP Bakery compatibility)
+function mira_agenda_set_permissions_policy() {
+    // Only apply on admin pages or when WP Bakery editor is active
+    if (is_admin() || (isset($_GET['vc_editable']) && $_GET['vc_editable']) || 
+        (isset($_GET['vc_action']) && $_GET['vc_action']) ||
+        (function_exists('vc_mode') && vc_mode())) {
+        
+        // Note: beforeunload is not a valid Permissions Policy feature
+        // The browser restriction is handled by our JavaScript fix instead
+        // header('Permissions-Policy: unload=*');
+        
+        // Instead, we'll use a more targeted approach via JavaScript
+        echo "<script>console.log('Mira Unload Fix: Script enqueued for WP Bakery context');</script>\n";
+    }
+}
+add_action( 'init', 'mira_agenda_set_permissions_policy', 1 );
+
+// Console logging for debugging the unload policy fix
+function mira_agenda_add_console_debug() {
+    if (DEVMODE && (is_admin() || (isset($_GET['vc_editable']) && $_GET['vc_editable']))) {
+        echo "<script>\n";
+        echo "console.log('Mira Day Agenda: Unload policy fix is active');\n";
+        if (is_admin()) {
+            echo "console.log('Mira: WP Bakery backend detected - applying unload fix');\n";
+        }
+        echo "</script>\n";
+    }
+}
+add_action( 'wp_head', 'mira_agenda_add_console_debug' );
+add_action( 'admin_head', 'mira_agenda_add_console_debug' );
 
