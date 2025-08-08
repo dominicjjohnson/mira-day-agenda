@@ -55,12 +55,21 @@
     4. Implemented override for vc.setDataChanged to avoid browser restrictions
     5. Enhanced compatibility with modern browser security policies
         
+ * Version 1.29. 2025-08-07 - Fixed My Diary AJAX functionality and session details display
+    1. Resolved AJAX response contamination from script output during requests
+    2. Fixed JSON parsing errors that caused "Session 1, Session 2" fallback display
+    3. Added safe AJAX URL detection to prevent JavaScript reference errors
+    4. Enhanced AJAX handler to accept both 'diary_sessions' and 'session_ids' parameters
+    5. Implemented clean output buffer management for all AJAX endpoints
+    6. Added comprehensive debugging and error reporting for AJAX functionality
+    7. Fixed WP Bakery element registration with proper parameter handling
+    8. My Diary now displays real session titles, times, dates, and track information
  
  
  */
  
 define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.21"); // Updated version - refined unload policy fix
+define('VERSION', "1.29"); // Updated version - matches plugin header
 
 
  // Exit if accessed directly.
