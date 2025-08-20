@@ -380,76 +380,7 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
 
   $output .= "\n</style>\n";
 
-  // Add speaker modal JS here so it is always present
-  /*$output .= '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-          document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
-            img.addEventListener("click", function() {
-              var modal = document.getElementById(img.getAttribute("data-modal"));
-              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
-            });
-          });
-          document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
-            name.addEventListener("click", function() {
-              var modal = document.getElementById(name.getAttribute("data-modal"));
-              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
-            });
-          });
-          document.body.addEventListener("click", function(e) {
-            if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
-              var modalId = e.target.getAttribute("data-modal");
-              var modal = document.getElementById(modalId);
-              if (modal) modal.style.display = "none";
-              document.body.style.overflow = "";
-              e.preventDefault();
-            }
-          });
-          window.addEventListener("click", function(event) {
-            if (event.target.classList && event.target.classList.contains("speaker-modal")) {
-              event.target.style.display = "none";
-              document.body.style.overflow = "";
-            }
-          });
-        });
-      </script>';
-      */
-  // Add speaker modal JS here so it is only output once per page
-  if (!defined('MIRA_SPEAKER_MODAL_JS_OUTPUT')) {
-    define('MIRA_SPEAKER_MODAL_JS_OUTPUT', true);
-    /*
-    $output .= '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-          document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
-            img.addEventListener("click", function() {
-              var modal = document.getElementById(img.getAttribute("data-modal"));
-              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
-            });
-          });
-          document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
-            name.addEventListener("click", function() {
-              var modal = document.getElementById(name.getAttribute("data-modal"));
-              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
-            });
-          });
-          document.body.addEventListener("click", function(e) {
-            if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
-              var modalId = e.target.getAttribute("data-modal");
-              var modal = document.getElementById(modalId);
-              if (modal) modal.style.display = "none";
-              document.body.style.overflow = "";
-              e.preventDefault();
-            }
-          });
-          window.addEventListener("click", function(event) {
-            if (event.target.classList && event.target.classList.contains("speaker-modal")) {
-              event.target.style.display = "none";
-              document.body.style.overflow = "";
-            }
-          });
-        });
-      </script>';
-      */
-  }
+
   return $output;
 }
 
@@ -919,8 +850,8 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         $SPEAKER_BIO_SUMMERY_LENGTH = function_exists('mira_agenda_get_char_limit') ? (int)(mira_agenda_get_char_limit() / 5) : 40;
         $speaker_bio_full = strip_tags(get_post_field('post_content', $speaker_post->ID));
         $speaker_bio = mb_strlen($speaker_bio_full) > $SPEAKER_BIO_SUMMERY_LENGTH
-            ? mb_substr($speaker_bio_full, 0, $SPEAKER_BIO_SUMMERY_LENGTH) . '...'
-            : $speaker_bio_full;
+        ? mb_substr($speaker_bio_full, 0, $SPEAKER_BIO_SUMMERY_LENGTH) . '...'
+        : $speaker_bio_full;
 
         // Unique modal ID for this speaker
         $modal_id = 'speaker-modal-' . $speaker_post->ID;
@@ -928,12 +859,11 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         $output .= '<div class="speaker" style="display: flex; align-items: flex-start; gap: 0.7em; margin-bottom: 0.6em;">';
         if ($speaker_image) {
           $output .= '<img src="' . esc_url($speaker_image) . '" alt="' . esc_attr($speaker_name) . '" '
-            . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
-            . 'class="speaker-img-clickable" data-modal="' . esc_attr($modal_id) . '">';
+        . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;">';
         }
-        // Speaker name clickable to open modal (same as photo)
+        // Speaker name (not clickable)
         $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
-        $output .= '<p style="margin:0;"><strong><span class="speaker-name-clickable" data-modal="' . esc_attr($modal_id) . '" style="color:inherit;text-decoration:underline;cursor:pointer;">' . esc_html($speaker_name) . '</span></strong>';
+        $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
         if ($speaker_job) {
           $output .= '<br>' . esc_html($speaker_job);
         }
@@ -950,37 +880,7 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
       . '<p style="margin-bottom:0.7em;">' . esc_html($speaker_bio) . '</p>'
       . '</div>'
       . '</div>';
-  $output .= '<script>
-    document.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
-        img.addEventListener("click", function() {
-          var modal = document.getElementById(img.getAttribute("data-modal"));
-          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
-        });
-      });
-      document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
-        name.addEventListener("click", function() {
-          var modal = document.getElementById(name.getAttribute("data-modal"));
-          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
-        });
-      });
-      document.body.addEventListener("click", function(e) {
-        if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
-          var modalId = e.target.getAttribute("data-modal");
-          var modal = document.getElementById(modalId);
-          if (modal) modal.style.visibility = "hidden";
-          document.body.style.overflow = "";
-          e.preventDefault();
-        }
-      });
-      window.addEventListener("click", function(event) {
-        if (event.target.classList && event.target.classList.contains("speaker-modal")) {
-          event.target.style.visibility = "hidden";
-          document.body.style.overflow = "";
-        }
-      });
-    });
-  </script>';
+
       }
 
       $output .= '</div>'; // Close role-column
