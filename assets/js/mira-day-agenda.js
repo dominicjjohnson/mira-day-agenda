@@ -21,7 +21,14 @@ document.addEventListener("DOMContentLoaded", function () {
 			if (closeSpeaker) {
 				closeSpeaker.addEventListener("click", function (e) {
 					e.preventDefault();
-					modal.style.display = "none";
+					// Find the closest parent .speaker-modal and hide it
+					let speakerModal = closeSpeaker.closest('.speaker-modal');
+					if (speakerModal) {
+						speakerModal.style.display = "none";
+					} else {
+						// fallback to modal variable
+						modal.style.display = "none";
+					}
 				});
 			}
 
