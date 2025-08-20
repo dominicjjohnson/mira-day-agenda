@@ -108,7 +108,7 @@ $atts = shortcode_atts([
     function mira_agenda_bool_local($val) {
       if (is_bool($val)) return $val;
       $val = strtolower(trim($val));
-  if (in_array($val, ['true', '1', 'yes', 'y'])) return true;
+      if (in_array($val, ['true', '1', 'yes', 'y'])) return true;
       if (in_array($val, ['false', '0', 'no'])) return false;
       return false;
     }
@@ -130,14 +130,6 @@ $atts = shortcode_atts([
   } else {
     $display_seminar_duration = mira_agenda_bool_local($atts['display_seminar_duration'] ?? 'yes');
   }
-  
-  // ALWAYS DEBUG: Check parameter processing (remove after testing)
-  error_log("=== AGENDA PARAMETER TEST ===");
-  error_log("Raw display_seminar_type: " . ($atts['display_seminar_type'] ?? 'NOT SET') . " (type: " . gettype($atts['display_seminar_type'] ?? null) . ")");
-  error_log("Raw display_seminar_duration: " . ($atts['display_seminar_duration'] ?? 'NOT SET') . " (type: " . gettype($atts['display_seminar_duration'] ?? null) . ")");
-  error_log("Final display_seminar_type: " . ($display_seminar_type ? 'true' : 'false'));
-  error_log("Final display_seminar_duration: " . ($display_seminar_duration ? 'true' : 'false'));
-  error_log("=== END PARAMETER TEST ===");
   
   $default_border_color = "#dddddd";
   
@@ -388,6 +380,76 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
 
   $output .= "\n</style>\n";
 
+  // Add speaker modal JS here so it is always present
+  /*$output .= '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+          document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
+            img.addEventListener("click", function() {
+              var modal = document.getElementById(img.getAttribute("data-modal"));
+              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
+            });
+          });
+          document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
+            name.addEventListener("click", function() {
+              var modal = document.getElementById(name.getAttribute("data-modal"));
+              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
+            });
+          });
+          document.body.addEventListener("click", function(e) {
+            if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
+              var modalId = e.target.getAttribute("data-modal");
+              var modal = document.getElementById(modalId);
+              if (modal) modal.style.display = "none";
+              document.body.style.overflow = "";
+              e.preventDefault();
+            }
+          });
+          window.addEventListener("click", function(event) {
+            if (event.target.classList && event.target.classList.contains("speaker-modal")) {
+              event.target.style.display = "none";
+              document.body.style.overflow = "";
+            }
+          });
+        });
+      </script>';
+      */
+  // Add speaker modal JS here so it is only output once per page
+  if (!defined('MIRA_SPEAKER_MODAL_JS_OUTPUT')) {
+    define('MIRA_SPEAKER_MODAL_JS_OUTPUT', true);
+    /*
+    $output .= '<script>
+        document.addEventListener("DOMContentLoaded", function() {
+          document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
+            img.addEventListener("click", function() {
+              var modal = document.getElementById(img.getAttribute("data-modal"));
+              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
+            });
+          });
+          document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
+            name.addEventListener("click", function() {
+              var modal = document.getElementById(name.getAttribute("data-modal"));
+              if (modal) { modal.style.display = "block"; document.body.style.overflow = "hidden"; }
+            });
+          });
+          document.body.addEventListener("click", function(e) {
+            if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
+              var modalId = e.target.getAttribute("data-modal");
+              var modal = document.getElementById(modalId);
+              if (modal) modal.style.display = "none";
+              document.body.style.overflow = "";
+              e.preventDefault();
+            }
+          });
+          window.addEventListener("click", function(event) {
+            if (event.target.classList && event.target.classList.contains("speaker-modal")) {
+              event.target.style.display = "none";
+              document.body.style.overflow = "";
+            }
+          });
+        });
+      </script>';
+      */
+  }
   return $output;
 }
 
@@ -625,6 +687,49 @@ function get_raw_agenda_data($args) {
   ];
 }
 
+function get_sponsored_sessions($args) {
+  // This function returns an array of sponsored sessions.
+  // Format: $array[session_id] = array of sponsor information:
+  //   - sponsor_id
+  //   - sponsor_name
+  //   - sponsor_logo
+  //   - sponsor_website
+
+  $sponsored_sessions = array();
+
+  $args['post_status'] = 'publish';
+  $query = new WP_Query($args);
+
+  if ($query->have_posts()) {
+    while ($query->have_posts()) {
+      $query->the_post();
+      $session_id = get_the_ID();
+
+      // Get sponsor info (assuming sponsor is a post object connected via post meta or relationship)
+      $sponsor_id = get_post_meta($session_id, 'sponsor_id', true);
+      if ($sponsor_id) {
+        $sponsor_name = get_the_title($sponsor_id);
+        $sponsor_logo = get_the_post_thumbnail_url($sponsor_id, 'thumbnail');
+        $sponsor_url = get_post_meta($sponsor_id, 'sponsor_url', true);
+        $sponsor_content = get_post_field('post_content', $sponsor_id);
+
+        $sponsored_sessions[$session_id] = array(
+          'sponsor_id' => $sponsor_id,
+          'sponsor_name' => $sponsor_name,
+          'sponsor_logo' => $sponsor_logo,
+          'sponsor_url' => $sponsor_url,
+          'sponsor_content' => $sponsor_content,
+        );
+      }
+    }
+    wp_reset_postdata();
+  }
+
+  return $sponsored_sessions;
+
+}
+
+
 function remove_comma_from_time($time) {
 
   // Ensure the input is in the format HH:MM
@@ -713,54 +818,31 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
 }
 
 function make_themes_types_html($sessionID, $minutes, $show_end_time, $start_time, $end_time, $display_seminar_type = true, $display_seminar_duration = true) {
-
-  // TEMP DEBUG: Check what's being passed
-  error_log("TEMP DEBUG - make_themes_types_html called with:");
-  error_log("display_seminar_type: " . ($display_seminar_type ? 'true' : 'false') . " (type: " . gettype($display_seminar_type) . ")");
-  error_log("display_seminar_duration: " . ($display_seminar_duration ? 'true' : 'false') . " (type: " . gettype($display_seminar_duration) . ")");
-
   // Early return if both are disabled
   if (!$display_seminar_type && !$display_seminar_duration) {
-    error_log("TEMP DEBUG: Both disabled, returning empty string");
     return "";
   }
-  
   $types = get_the_terms($sessionID, 'type');
   $type_content = "";
   $duration_content = "";
-  
   // Build type content if enabled and types exist
   if ($display_seminar_type && is_array($types) && !empty($types)) {
     foreach ($types as $typeObj) {
       $type_content .= "<span>".$typeObj->name . "</span>\n";
     }
-    error_log("TEMP DEBUG: Type content built: " . $type_content);
   }
-  
   // Build duration content if enabled
   if ($display_seminar_duration) {
-
-    // Old functionality - change to just display the duration.
-
-    //if ($show_end_time) {
-    //  $duration_content = '<i class="fa-solid fa-clock"></i> ' . $start_time . ' - ' . $end_time;
-    //} else {
-      $duration_content = '<i class="fa-solid fa-clock"></i> ' . $minutes. "m";
-    //}
-    error_log("TEMP DEBUG: Duration content built: " . $duration_content);
+    $duration_content = '<i class="fa-solid fa-clock"></i> ' . $minutes. "m";
   }
-  
   // Only create the div if we have content to show
   if (!empty($type_content) || !empty($duration_content)) {
     $result = "<div class='themes'>\n";
     $result .= $type_content;
     $result .= $duration_content;
     $result .= "</div>";
-    error_log("TEMP DEBUG: Final result: " . htmlspecialchars($result));
     return $result;
   }
-  
-  error_log("TEMP DEBUG: No content to show, returning empty string");
   return "";
 }
 
@@ -849,8 +931,9 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
             . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
             . 'class="speaker-img-clickable" data-modal="' . esc_attr($modal_id) . '">';
         }
+        // Speaker name clickable to open modal (same as photo)
         $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
-        $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
+        $output .= '<p style="margin:0;"><strong><span class="speaker-name-clickable" data-modal="' . esc_attr($modal_id) . '" style="color:inherit;text-decoration:underline;cursor:pointer;">' . esc_html($speaker_name) . '</span></strong>';
         if ($speaker_job) {
           $output .= '<br>' . esc_html($speaker_job);
         }
@@ -859,53 +942,45 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         }
         $output .= '</p>';
         $output .= '</div>';
-        // Modal HTML (hidden by default)
-        $output .= '
-        <div id="' . esc_attr($modal_id) . '" class="speaker-modal" style="display:none;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);">
-          <div style="background:#fff;max-width:350px;margin:10vh auto;padding:2em;position:relative">
-            <span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>
-            <h4 style="margin-top:0;">' . esc_html($speaker_name) . '</h4>
-            <p style="margin-bottom:0.7em;">' . esc_html($speaker_bio) . '</p>
-          </div>
-        </div>
-        ';
-        // Add JS and only once per page (outside the loop)
-        static $speaker_modal_script_output = false;
-        if (!$speaker_modal_script_output) {
-          $output .= '
-          <style>
-            .speaker-img-clickable:hover {
-              transform: scale(1.05);
-              box-shadow: 0 0 0 2px #0073aa33;
-            }
-            .speaker-modal { animation: fadeInSpeakerModal 0.2s; }
-            @keyframes fadeInSpeakerModal { from { opacity: 0; } to { opacity: 1; } }
-          </style>
-          <script>
-            document.addEventListener("DOMContentLoaded", function() {
-              document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
-          img.addEventListener("click", function() {
-            var modal = document.getElementById(img.getAttribute("data-modal"));
-            if (modal) modal.style.display = "block";
-          });
-              });
-              document.querySelectorAll(".close-speaker-modal").forEach(function(btn) {
-          btn.addEventListener("click", function() {
-            var modal = document.getElementById(btn.getAttribute("data-modal"));
-            if (modal) modal.style.display = "none";
-          });
-              });
-              window.addEventListener("click", function(event) {
-          if (event.target.classList && event.target.classList.contains("speaker-modal")) {
-            event.target.style.display = "none";
-          }
-              });
-            });
-          </script>
-          ';
-          $speaker_modal_script_output = true;
+    // Modal HTML (hidden by default) - fully reverted to original logic
+    $output .= '<div id="' . esc_attr($modal_id) . '" class="speaker-modal" style="display:block;visibility:hidden;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);"'
+      . '<div style="background:#fff;max-width:350px;margin:10vh auto;padding:2em;position:relative">'
+      . '<span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>'
+      . '<h4 style="margin-top:0;"><a href="' . esc_url(get_permalink($speaker_post->ID)) . '" target="_blank" style="color:inherit;text-decoration:underline;cursor:pointer;">' . esc_html($speaker_name) . '</a></h4>'
+      . '<p style="margin-bottom:0.7em;">' . esc_html($speaker_bio) . '</p>'
+      . '</div>'
+      . '</div>';
+  $output .= '<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
+        img.addEventListener("click", function() {
+          var modal = document.getElementById(img.getAttribute("data-modal"));
+          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
+        });
+      });
+      document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
+        name.addEventListener("click", function() {
+          var modal = document.getElementById(name.getAttribute("data-modal"));
+          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
+        });
+      });
+      document.body.addEventListener("click", function(e) {
+        if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
+          var modalId = e.target.getAttribute("data-modal");
+          var modal = document.getElementById(modalId);
+          if (modal) modal.style.visibility = "hidden";
+          document.body.style.overflow = "";
+          e.preventDefault();
         }
-        $output .= '</div>';
+      });
+      window.addEventListener("click", function(event) {
+        if (event.target.classList && event.target.classList.contains("speaker-modal")) {
+          event.target.style.visibility = "hidden";
+          document.body.style.overflow = "";
+        }
+      });
+    });
+  </script>';
       }
 
       $output .= '</div>'; // Close role-column
@@ -917,20 +992,16 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
     $output .= '</div>'; // Close roles-grid
   }
 
-  
-
   return $output;
 }
 
-function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading, $track_background_colour = array()) {
+function display_one_session ($sessions, $rowID,$inputs,$headings, $display_heading, $sponsored_sessions, $track_background_colour = array() ) {
 
   // Final check to make sure you are to display track headings. Shouldn't be needed but there is an issue with the logic.
   
   if ($inputs['display_heading_bar'] == "false") {
     $display_heading = false;
   }
-
-
 
   // set a border class. at the moment I'm only using in tracks. Might need it in all-tracks too
   $border = "yes";
@@ -939,6 +1010,11 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   }
   
   $session_id = str_replace('session-', '', $sessions[$rowID]['sessionID']);
+
+  $sponsor_content = "";
+  if ( ! empty( $sponsored_sessions[$session_id] ) ) {
+    $sponsor_content = get_sponsor_content($sponsored_sessions[$session_id]);
+  }
 
   // Get seminar highlight color for dynamic border styling, with track color fallback
   $seminar_highlight = get_post_meta($session_id, 'seminar_highlight', true);
@@ -1042,7 +1118,8 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     $mydiary_button = generate_mydiary_button($session_id);
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
-        <div class="banner">
+
+      <div class="banner">
           <div class="title_time_display title_time_display_alltracks bg_color_alltracks" style="{$border_style}">
             <span class="time">{$session_time}</span>
             <span class="title">{$session_title_link}{$mydiary_button}</span>
@@ -1078,11 +1155,15 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     // removed       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
     
     $mydiary_button = generate_mydiary_button($session_id);
+
     $output = <<<HTML
     
     <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['gridColumn']}-border" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; border-width: 1px;">
 
       {$track_heading}
+
+      {$sponsor_content}
+
       <div class="title_time_display title_time_display_cols" style="{$border_style}">
         <span class="time">{$session_time}</span>
         <span class="title">{$session_title_link}{$mydiary_button}</span>
@@ -1120,4 +1201,42 @@ function parse_session_time_details($timeRange) {
     ];
 }
 
+function get_sponsor_content ( $sponsored_session ) {
 
+  // This function returns the HTML content for a sponsored session.
+  // If no sponsored session is provided, it returns an empty string.
+  // If the sponsored session is not an array, it returns "content2" as a placeholder.
+
+  if (empty($sponsored_session)) {
+    return "";
+  }
+  else {
+    
+    // display the sponsored session content. In a nice box with title, logo all linked to the url
+    $name = esc_html($sponsored_session['sponsor_name'] ?? '');
+    $logo = esc_url($sponsored_session['sponsor_logo'] ?? '');
+    $url = esc_url($sponsored_session['sponsor_url'] ?? '');
+    $content = wp_kses_post($sponsored_session['sponsor_content'] ?? '');
+
+    $html = '<div class="sponsor-box" style="border:1px solid #dedede;padding:1em;margin-bottom:1em;background:#f9f9f9;">';
+    if ($url) {
+      $html .= '<a href="' . $url . '" target="_blank" style="text-decoration:none;">';
+    }
+    if ($logo) {
+      $html .= '<img src="' . $logo . '" alt="' . $name . '" style="max-height:40px;vertical-align:middle;margin-right:10px;">';
+    }
+    if ($name) {
+      $html .= '<strong style="font-size:1.1em;">' . $name . '</strong>';
+    }
+    if ($url) {
+      $html .= '</a>';
+    }
+    if ($content) {
+      $html .= '<div class="sponsor-content" style="margin-top:0.5em;">' . $content . '</div>';
+    }
+    $html .= '</div>';
+
+    return $html;
+  }
+
+}
