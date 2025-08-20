@@ -872,7 +872,7 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         }
         $output .= '</p>';
         $output .= '</div>';
-    // Modal HTML (hidden by default) - fully reverted to original logic
+   // Modal HTML (hidden by default) - fully reverted to original logic
     $output .= '<div id="' . esc_attr($modal_id) . '" class="speaker-modal" style="display:block;visibility:hidden;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);"'
       . '<div style="background:#fff;max-width:350px;margin:10vh auto;padding:2em;position:relative">'
       . '<span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>'
@@ -880,6 +880,37 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
       . '<p style="margin-bottom:0.7em;">' . esc_html($speaker_bio) . '</p>'
       . '</div>'
       . '</div>';
+  $output .= '<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
+        img.addEventListener("click", function() {
+          var modal = document.getElementById(img.getAttribute("data-modal"));
+          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
+        });
+      });
+      document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
+        name.addEventListener("click", function() {
+          var modal = document.getElementById(name.getAttribute("data-modal"));
+          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
+        });
+      });
+      document.body.addEventListener("click", function(e) {
+        if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
+          var modalId = e.target.getAttribute("data-modal");
+          var modal = document.getElementById(modalId);
+          if (modal) modal.style.visibility = "hidden";
+          document.body.style.overflow = "";
+          e.preventDefault();
+        }
+      });
+      window.addEventListener("click", function(event) {
+        if (event.target.classList && event.target.classList.contains("speaker-modal")) {
+          event.target.style.visibility = "hidden";
+          document.body.style.overflow = "";
+        }
+      });
+    });
+  </script>';
 
       }
 
