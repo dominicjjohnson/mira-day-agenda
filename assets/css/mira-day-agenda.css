@@ -1,58 +1,61 @@
+/* Renamed from solar-agenda-grid.css */
 /*************************
  * GRID SCHEDULE LAYOUT
  *************************/
  @media screen and (min-width:700px) {
-    .schedule {
-      display: grid;
-      grid-gap: 0.25em;
-      grid-template-rows:
-        [tracks] auto
-        [time-0800] 1fr
-        [time-0830] 1fr
-        [time-0900] 1fr
-        [time-0930] 1fr
-        [time-1000] 1fr
-        [time-1030] 1fr
-        [time-1100] 1fr
-        [time-1130] 1fr
-        [time-1200] 1fr;
-        /* Note 1:
-        Use 24hr time for gridline names for simplicity
+		.schedule {
+			display: grid;
+			grid-gap: 0.25em;
+			grid-template-rows:
+				[tracks] auto
+				[time-0800] 1fr
+				[time-0830] 1fr
+				[time-0900] 1fr
+				[time-0930] 1fr
+				[time-1000] 1fr
+				[time-1030] 1fr
+				[time-1100] 1fr
+				[time-1130] 1fr
+				[time-1200] 1fr;
+				/* Note 1:
+				Use 24hr time for gridline names for simplicity
   
-        Note 2: Use "auto" instead of "1fr" for a more compact schedule where height of a slot is not proportional to the session length. Implementing a "compact" shortcode attribute might make sense for this!
-        Try 0.5fr for more compact equal rows. I don't quite understand how that works :)
-        */
+				Note 2: Use "auto" instead of "1fr" for a more compact schedule where height of a slot is not proportional to the session length. Implementing a "compact" shortcode attribute might make sense for this!
+				Try 0.5fr for more compact equal rows. I don't quite understand how that works :)
+				*/
       
-      grid-template-columns:
-        [times] 4em
-        [track-1-start] 1fr
-        [track-1-end track-2-start] 1fr
-        [track-2-end track-3-start] 1fr
-        [track-3-end track-4-start] 1fr
-        [track-4-end];
-    }
-  }
+			grid-template-columns:
+				[times] 4em
+				[track-1-start] 1fr
+				[track-1-end track-2-start] 1fr
+				[track-2-end track-3-start] 1fr
+				[track-3-end track-4-start] 1fr
+				[track-4-end];
+		}
+	}
   
-  .time-slot {
-    grid-column: times;
-  }
+	.time-slot {
+		grid-column: times;
+        color: black;
+	}
   
-  .title_time_display {
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75em 1.25em;
-    background-color: #f5f5f5;
-    border-left: 4px solid;
-    border-radius: 4px;
-    margin-bottom: 1em;
-    font-size: 1rem;
-    color: #222;
-  }
+	.title_time_display {
+		align-items: center;
+		justify-content: space-between;
+		padding: 0.75em 1.25em;
+		background-color: #f5f5f5;
+		border-left: 4px solid;
+		border-radius: 4px;
+		margin-bottom: 1em;
+		font-size: 1rem;
+		color: #222;
+	}
 
-  .title_time_display_alltracks {
-    display: flex;
-  }
-  .title_time_display_cols {
+	.title_time_display_alltracks {
+		display: flex;
+	}
+	
+    .title_time_display_cols {
     display: grid;
     grid-template-columns: auto 1fr;
     align-items: center;
@@ -353,6 +356,5 @@
 .speaker {
     text-align: left !important; 
 }
-
 
 

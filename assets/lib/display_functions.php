@@ -70,7 +70,7 @@ $atts = shortcode_atts([
         'all-tracks' => '',
         'border' => '',
         'display_heading_bar' => false,
-        'display_heading_bar_page' => false,
+        'display_heading_bar_page' => true,
         'track1' => '',
         'track2' => '',
         'track3' => '',
@@ -103,23 +103,32 @@ $atts = shortcode_atts([
   $display_heading_bar = esc_html($atts['display_heading_bar'] ?? '');
   $display_heading_bar_page = esc_html($atts['display_heading_bar_page'] ?? '');
   
-  // New flags
-  $time_slot_side = filter_var($atts['time_slot_side'], FILTER_VALIDATE_BOOLEAN);
-  $show_end_time = filter_var($atts['show_end_time'], FILTER_VALIDATE_BOOLEAN);
-  $show_session_duration = filter_var($atts['show_session_duration'], FILTER_VALIDATE_BOOLEAN);
-  $link_title_to_details = filter_var($atts['link_title_to_details'], FILTER_VALIDATE_BOOLEAN);
-  
-  // Handle display parameters - check if already boolean (from shortcode conversion) or string (direct usage)
+  // Helper to convert various truthy/falsy strings to boolean (unique name to avoid redeclaration)
+  if (!function_exists('mira_agenda_bool_local')) {
+    function mira_agenda_bool_local($val) {
+      if (is_bool($val)) return $val;
+      $val = strtolower(trim($val));
+  if (in_array($val, ['true', '1', 'yes', 'y'])) return true;
+      if (in_array($val, ['false', '0', 'no'])) return false;
+      return false;
+    }
+  }
+
+  $time_slot_side = mira_agenda_bool_local($atts['time_slot_side'] ?? false);
+  $show_end_time = mira_agenda_bool_local($atts['show_end_time'] ?? false);
+  $show_session_duration = mira_agenda_bool_local($atts['show_session_duration'] ?? false);
+  $link_title_to_details = mira_agenda_bool_local($atts['link_title_to_details'] ?? false);
+
   if (is_bool($atts['display_seminar_type'] ?? false)) {
     $display_seminar_type = $atts['display_seminar_type'];
   } else {
-    $display_seminar_type = (strtolower(esc_html($atts['display_seminar_type'] ?? 'yes')) === 'yes');
+    $display_seminar_type = mira_agenda_bool_local($atts['display_seminar_type'] ?? 'yes');
   }
-  
+
   if (is_bool($atts['display_seminar_duration'] ?? false)) {
     $display_seminar_duration = $atts['display_seminar_duration'];
   } else {
-    $display_seminar_duration = (strtolower(esc_html($atts['display_seminar_duration'] ?? 'yes')) === 'yes');
+    $display_seminar_duration = mira_agenda_bool_local($atts['display_seminar_duration'] ?? 'yes');
   }
   
   // ALWAYS DEBUG: Check parameter processing (remove after testing)
@@ -730,11 +739,14 @@ function make_themes_types_html($sessionID, $minutes, $show_end_time, $start_tim
   
   // Build duration content if enabled
   if ($display_seminar_duration) {
-    if ($show_end_time) {
-      $duration_content = '<i class="fa-solid fa-clock"></i> ' . $start_time . ' - ' . $end_time;
-    } else {
+
+    // Old functionality - change to just display the duration.
+
+    //if ($show_end_time) {
+    //  $duration_content = '<i class="fa-solid fa-clock"></i> ' . $start_time . ' - ' . $end_time;
+    //} else {
       $duration_content = '<i class="fa-solid fa-clock"></i> ' . $minutes. "m";
-    }
+    //}
     error_log("TEMP DEBUG: Duration content built: " . $duration_content);
   }
   
@@ -1019,13 +1031,20 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     $session_title_link = esc_html($sessions[$rowID]['sessionsTitle']);
   }
 
+  if ($inputs['show_end_time']) {
+    $session_time = $time_split['start_time'] . " - " . $time_split['end_time'];;
+  }
+  else {
+    $session_time = $time_split['start_time'];
+  }
+
   if ($sessions[$rowID]['trackID'] == "track-all") {
     $mydiary_button = generate_mydiary_button($session_id);
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
         <div class="banner">
           <div class="title_time_display title_time_display_alltracks bg_color_alltracks" style="{$border_style}">
-            <span class="time">{$time_split['start_time']}</span>
+            <span class="time">{$session_time}</span>
             <span class="title">{$session_title_link}{$mydiary_button}</span>
           </div>
           {$type_html}
@@ -1041,14 +1060,15 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
       
   }
   else {
-    
+
     //$track_heading = <span class="track-slot {$key}" aria-hidden="true" style="grid-column: {$key}; grid-row: tracks;">{$value}</span>
     $track_heading ="";
     if ($display_heading) {
       $track_number = $sessions[$rowID]['trackID'];
       
       // Check if the heading exists before accessing it
-      if (isset($headings[$track_number])) {
+      if ($inputs['display_heading_bar'] === true && isset($headings[$track_number])) {
+
         $track_heading = get_single_heading_html($track_number,$headings[$track_number],true);
       }
       
@@ -1064,7 +1084,7 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
 
       {$track_heading}
       <div class="title_time_display title_time_display_cols" style="{$border_style}">
-        <span class="time">{$time_split['start_time']}</span>
+        <span class="time">{$session_time}</span>
         <span class="title">{$session_title_link}{$mydiary_button}</span>
       </div>
       <div class="event-details">

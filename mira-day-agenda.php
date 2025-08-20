@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.29
+ * Version: 1.30
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -65,12 +65,10 @@
     7. Fixed WP Bakery element registration with proper parameter handling
     8. My Diary now displays real session titles, times, dates, and track information
  
- 
  */
  
 define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.29"); // Updated version - matches plugin header
-
+define('VERSION', "1.30"); // Updated version - matches plugin header
 
  // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -377,7 +375,7 @@ function mira_agenda_grid_old_shortcode($atts) {
         'track6' => '',
         'track7' => '',
         'track8' => '',
-        'border' => 'yes',
+        'border' => 'no',
         'display_heading_bar' => 'yes',
         'show_end_time' => 'false',
         'time_slot_side' => 'false',
@@ -400,23 +398,30 @@ function mira_agenda_grid_old_shortcode($atts) {
     error_log('Raw display_seminar_duration: ' . (isset($atts['display_seminar_duration']) ? $atts['display_seminar_duration'] : 'NOT SET'));
 
     // Convert WPBakery string values to proper boolean types
-    if (isset($atts['display_heading_bar']) && in_array($atts['display_heading_bar'], ['yes', 'no'])) {
-        $atts['display_heading_bar'] = ($atts['display_heading_bar'] === 'yes');
+    // Helper to convert various truthy/falsy strings to boolean
+    function mira_agenda_bool($val) {
+        if (is_bool($val)) return $val;
+        $val = strtolower(trim($val));
+        if (in_array($val, ['true', '1', 'yes'])) return true;
+        if (in_array($val, ['false', '0', 'no'])) return false;
+        return false;
     }
-    if (isset($atts['show_end_time']) && in_array($atts['show_end_time'], ['true', 'false'])) {
-        $atts['show_end_time'] = ($atts['show_end_time'] === 'true');
+
+    if (isset($atts['display_heading_bar'])) {
+        $atts['display_heading_bar'] = mira_agenda_bool($atts['display_heading_bar']);
     }
-    if (isset($atts['time_slot_side']) && in_array($atts['time_slot_side'], ['true', 'false'])) {
-        $atts['time_slot_side'] = ($atts['time_slot_side'] === 'true');
+    if (isset($atts['show_end_time'])) {
+        $atts['show_end_time'] = mira_agenda_bool($atts['show_end_time']);
     }
-    
-    // Convert our new display parameters
-    if (isset($atts['display_seminar_type']) && in_array($atts['display_seminar_type'], ['yes', 'no'])) {
-        $atts['display_seminar_type'] = ($atts['display_seminar_type'] === 'yes');
+    if (isset($atts['time_slot_side'])) {
+        $atts['time_slot_side'] = mira_agenda_bool($atts['time_slot_side']);
+    }
+    if (isset($atts['display_seminar_type'])) {
+        $atts['display_seminar_type'] = mira_agenda_bool($atts['display_seminar_type']);
         error_log('SHORTCODE DEBUG: display_seminar_type converted to: ' . ($atts['display_seminar_type'] ? 'true' : 'false'));
     }
-    if (isset($atts['display_seminar_duration']) && in_array($atts['display_seminar_duration'], ['yes', 'no'])) {
-        $atts['display_seminar_duration'] = ($atts['display_seminar_duration'] === 'yes');
+    if (isset($atts['display_seminar_duration'])) {
+        $atts['display_seminar_duration'] = mira_agenda_bool($atts['display_seminar_duration']);
         error_log('SHORTCODE DEBUG: display_seminar_duration converted to: ' . ($atts['display_seminar_duration'] ? 'true' : 'false'));
     }
     error_log('=== END SHORTCODE DEBUG ===');
@@ -1009,15 +1014,15 @@ function mira_agenda_grid_old_enqueue_assets() {
   // Only enqueue assets if DEVMODE is true
   // Enqueue the CSS file
   
-  if (DEVMODE) {
-    $css_url = 'assets/css/solar-agenda-grid.css?'.time();
-  }
-  else {
-    $css_url = 'assets/css/solar-agenda-grid.css?'.VERSION;
-  }
+    if (DEVMODE) {
+        $css_url = 'assets/css/mira-day-agenda.css?'.time();
+    }
+    else {
+        $css_url = 'assets/css/mira-day-agenda.css?'.VERSION;
+    }
   
   wp_enqueue_style(
-      'solar-agenda-grid-style', // Handle for the CSS file
+      'mira-day-agenda-style', // Handle for the CSS file
       plugins_url( $css_url, __FILE__ ), // Path to the CSS file
       array(), // Dependencies (none)
       DEVMODE ? time() : '2.0', // Use time() as the version for cache-busting if DEVMODE is true
@@ -1026,8 +1031,8 @@ function mira_agenda_grid_old_enqueue_assets() {
 
   // Enqueue the JS file
     wp_enqueue_script(
-      'solar-agenda-grid',
-      plugin_dir_url(__FILE__) . 'assets/js/solar-agenda-grid.js',
+      'mira-day-agenda',
+      plugin_dir_url(__FILE__) . 'assets/js/mira-day-agenda.js',
       array(),
       null,
       true

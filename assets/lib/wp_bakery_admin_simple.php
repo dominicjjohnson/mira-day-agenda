@@ -244,12 +244,22 @@ add_filter('shortcode_atts_agenda-grid', function($out, $pairs, $atts) {
     if (empty($out['display_seminar_type']) || $out['display_seminar_type'] === '') {
         $out['display_seminar_type'] = 'no';
     }
-    
+
     // Ensure display_seminar_duration defaults to 'no' when blank or not set
     if (empty($out['display_seminar_duration']) || $out['display_seminar_duration'] === '') {
         $out['display_seminar_duration'] = 'no';
     }
-    
+
+    // Ensure time_slot_side defaults to 'false' when blank or not set
+    if (!isset($out['time_slot_side']) || $out['time_slot_side'] === '' || $out['time_slot_side'] === null) {
+        $out['time_slot_side'] = 'false';
+    }
+
+    // Ensure display_heading_bar always appears and defaults to 'yes' when blank or not set
+    if (!isset($out['display_heading_bar']) || $out['display_heading_bar'] === '' || $out['display_heading_bar'] === null) {
+        $out['display_heading_bar'] = 'yes';
+    }
+
     return $out;
 }, 10, 3);
 
