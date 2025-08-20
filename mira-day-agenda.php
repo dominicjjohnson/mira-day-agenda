@@ -1,3 +1,4 @@
+
 <?php
 /**
  * Plugin Name: Mira Day Agenda
@@ -80,6 +81,8 @@ require_once plugin_dir_path( __FILE__ ) . 'assets/lib/cpt.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin_simple.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/display_functions.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/data_functions.php';
+// Register sponsors <-> seminars relationship (editable in sponsor admin)
+require_once plugin_dir_path( __FILE__ ) . 'assets/lib/sponsors_seminars_relationship.php';
 
 // Clear WP Bakery cache on plugin update
 add_action('admin_init', function() {
@@ -304,7 +307,7 @@ return $output;
 }
 
 
-function display_grid ($sessions,$inputs,$headings, $track_background_colour = array()) {
+function display_grid ($sessions,$inputs,$headings, $track_background_colour = array(), $sponsored_sessions = array() ) {
   
   // this put the headings at the top of the page. We're removing this functionality for now. 
     
@@ -344,7 +347,7 @@ function display_grid ($sessions,$inputs,$headings, $track_background_colour = a
             $display_headings = false; // Prevent re-display for already seen tracks
         }
     
-        echo display_one_session($sessions, $rowID, $inputs, $headings, $display_headings, $track_background_colour);
+        echo display_one_session($sessions, $rowID, $inputs, $headings, $display_headings, $sponsored_sessions, $track_background_colour );
     
         // Store last track ID for next iteration
         $lastTrackID = $currentTrackID;
@@ -353,7 +356,10 @@ function display_grid ($sessions,$inputs,$headings, $track_background_colour = a
   else {
     // do not display the headings
     foreach ($sessions as $rowID => $session) {
-        echo display_one_session($sessions, $rowID, $inputs, $headings,false, $track_background_colour);
+
+        //print_r($session);
+
+        echo display_one_session($sessions, $rowID, $inputs, $headings,false, $sponsored_sessions, $track_background_colour);
     }
   }
 }
@@ -399,12 +405,14 @@ function mira_agenda_grid_old_shortcode($atts) {
 
     // Convert WPBakery string values to proper boolean types
     // Helper to convert various truthy/falsy strings to boolean
-    function mira_agenda_bool($val) {
-        if (is_bool($val)) return $val;
-        $val = strtolower(trim($val));
-        if (in_array($val, ['true', '1', 'yes'])) return true;
-        if (in_array($val, ['false', '0', 'no'])) return false;
-        return false;
+    if (!function_exists('mira_agenda_bool')) {
+        function mira_agenda_bool($val) {
+            if (is_bool($val)) return $val;
+            $val = strtolower(trim($val));
+            if (in_array($val, ['true', '1', 'yes'])) return true;
+            if (in_array($val, ['false', '0', 'no'])) return false;
+            return false;
+        }
     }
 
     if (isset($atts['display_heading_bar'])) {
@@ -440,6 +448,8 @@ function mira_agenda_grid_old_shortcode($atts) {
     // Get the data for the agenda - just runs the query. Returns false if no data
     $result = get_raw_agenda_data($args);
 
+    $sponsored_sessions = get_sponsored_sessions($args);
+
     if ($result['error']) {
         die($result['error_message']); // Abort script execution
     }
@@ -463,7 +473,7 @@ function mira_agenda_grid_old_shortcode($atts) {
         
     echo print_times($time_slots);
 
-    echo display_grid($sessions,$inputs,$headings, $track_background_colour); 
+    echo display_grid($sessions,$inputs,$headings, $track_background_colour, $sponsored_sessions); 
         
     echo '</div>';
 
@@ -1030,6 +1040,9 @@ function mira_agenda_grid_old_enqueue_assets() {
   );
 
   // Enqueue the JS file
+
+
+  /*
     wp_enqueue_script(
       'mira-day-agenda',
       plugin_dir_url(__FILE__) . 'assets/js/mira-day-agenda.js',
@@ -1037,6 +1050,8 @@ function mira_agenda_grid_old_enqueue_assets() {
       null,
       true
   );
+
+*/
 
   // Conditionally enqueue MyDiary assets only if enabled
   if (mira_agenda_is_my_diary_enabled()) {
@@ -1050,6 +1065,7 @@ function mira_agenda_grid_old_enqueue_assets() {
     );
 
     // Enqueue MyDiary JS
+   
     wp_enqueue_script(
         'mira-mydiary-script',
         plugin_dir_url(__FILE__) . 'assets/js/mydiary.js',
@@ -1128,4 +1144,5 @@ function mira_agenda_add_console_debug() {
 }
 add_action( 'wp_head', 'mira_agenda_add_console_debug' );
 add_action( 'admin_head', 'mira_agenda_add_console_debug' );
+
 

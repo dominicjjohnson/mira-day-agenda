@@ -42,19 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get current diary items from cookie
     function getDiaryItems() {
         let diary = getCookie('AddToDiary');
-        console.log('getDiaryItems - Raw cookie value:', diary);
         if (diary) {
             try {
                 const parsed = JSON.parse(diary);
-                console.log('getDiaryItems - Parsed cookie:', parsed);
                 return parsed;
             } catch (e) {
-                console.warn('Invalid diary cookie format, resetting. Error:', e);
-                console.warn('Problematic cookie value:', diary);
                 return [];
             }
         }
-        console.log('getDiaryItems - No cookie found, returning empty array');
         return [];
     }
 
@@ -131,14 +126,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!button) {
-            console.warn('No MyDiary button found');
             return;
         }
         
         let seminarId = button.getAttribute('data-seminar-id');
         
         if (!seminarId) {
-            console.warn('No seminar ID found on button');
             return;
         }
 
@@ -196,12 +189,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Debug function to log current diary contents
     window.debugMyDiary = function() {
-        console.log('Current diary items:', getDiaryItems());
     };
 
     // Global refresh function for the refresh button
     window.refreshMyDiary = function() {
-        console.log('Manual diary refresh triggered');
         const diaryContainers = document.querySelectorAll('.my-diary-container');
         if (diaryContainers.length > 0 && typeof window.populateMyDiary === 'function') {
             if (typeof myDiaryConfig !== 'undefined') {
@@ -221,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function addTabFocusDetection() {
         // Window focus event
         window.addEventListener('focus', function() {
-            console.log('Window gained focus - checking for diary displays');
             const diaryContainers = document.querySelectorAll('.my-diary-container');
             if (diaryContainers.length > 0 && typeof window.populateMyDiary === 'function') {
                 setTimeout(function() {
@@ -244,7 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Page visibility change event
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                console.log('Tab became visible - checking for diary displays');
                 const diaryContainers = document.querySelectorAll('.my-diary-container');
                 if (diaryContainers.length > 0 && typeof window.populateMyDiary === 'function') {
                     setTimeout(function() {
@@ -268,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const observer = new IntersectionObserver(function(entries) {
                 entries.forEach(function(entry) {
                     if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-                        console.log('Diary container came into view - triggering refresh');
                         if (typeof window.populateMyDiary === 'function') {
                             setTimeout(function() {
                                 if (typeof myDiaryConfig !== 'undefined') {
@@ -316,35 +304,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.querySelector('.my-diary-content');
         const emptyDiv = document.querySelector('.my-diary-empty');
         
-        console.log('PopulateMyDiary called with:', { 
-            config, 
-            diaryItems, 
-            diaryItemsLength: diaryItems.length,
-            container: !!container, 
-            emptyDiv: !!emptyDiv,
-            ajaxurl: getAjaxUrl()
-        });
-        
-        // Debug: Show current cookies
-        console.log('All cookies:', document.cookie);
-        
         if (!container) {
-            console.warn('My Diary container (.my-diary-content) not found');
             return;
         }
 
         if (diaryItems.length === 0) {
-            console.log('No diary items found, showing empty message');
             // Show empty message, hide content
             container.style.display = 'none';
             container.innerHTML = '';
             
             if (emptyDiv && config.showEmptyMessage) {
                 emptyDiv.style.display = 'block';
-                console.log('Showing existing empty div');
             } else if (config.showEmptyMessage) {
                 // Create empty message if it doesn't exist
-                console.log('Creating new empty message');
                 const emptyHtml = '<div class="my-diary-empty"><p class="empty-message">Your diary is empty. Add sessions from the agenda to see them here.</p></div>';
                 container.innerHTML = emptyHtml;
                 container.style.display = 'block';
@@ -352,8 +324,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        console.log('Found', diaryItems.length, 'diary items, fetching session data');
-        
         // Hide empty message, show content
         if (emptyDiv) {
             emptyDiv.style.display = 'none';
@@ -367,21 +337,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const ajaxUrl = getAjaxUrl();
         
         if (ajaxUrl) {
-            console.log('Using WordPress AJAX to fetch session data from:', ajaxUrl);
             // Fetch session data for each diary item
             fetchSessionsData(diaryItems, ajaxUrl)
                 .then(sessions => {
-                    console.log('Fetched sessions successfully:', sessions);
                     renderDiarySessions(sessions, container, config);
                 })
                 .catch(error => {
                     console.error('Error loading diary sessions:', error);
-                    console.error('Error details:', {
-                        message: error.message,
-                        stack: error.stack,
-                        ajaxurl: getAjaxUrl(),
-                        sessionIds: diaryItems
-                    });
                     // Fallback to mock data or simple display
                     console.log('Falling back to simple display');
                     renderSimpleDiarySessions(diaryItems, container, config);
@@ -398,9 +360,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const fetchUrl = ajaxUrl || getAjaxUrl();
         
         return new Promise((resolve, reject) => {
-            console.log('fetchSessionsData called with IDs:', sessionIds);
-            console.log('Using AJAX URL:', fetchUrl);
-            
             // Use WordPress AJAX to fetch session data
             const data = new FormData();
             data.append('action', 'get_diary_sessions');
@@ -411,21 +370,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.append('nonce', nonce);
             }
 
-            console.log('Fetching from URL:', fetchUrl);
-
             fetch(fetchUrl, {
                 method: 'POST',
                 body: data
             })
             .then(response => {
-                console.log('Fetch response status:', response.status, response.statusText);
                 if (!response.ok) {
                     throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
                 }
                 return response.json();
             })
             .then(result => {
-                console.log('AJAX response:', result);
                 if (result.success) {
                     resolve(result.data);
                 } else {
@@ -441,8 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Simple fallback display when AJAX is not available
     function renderSimpleDiarySessions(sessionIds, container, config) {
-        console.log('Rendering simple diary sessions for IDs:', sessionIds);
-        
         let html = '<div class="diary-day-group">';
         html += '<h3 class="diary-day-header">My Saved Sessions</h3>';
         html += '<div class="diary-day-sessions">';
@@ -488,13 +441,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Try to fetch data again after a delay
         setTimeout(function() {
-            console.log('Attempting to retry session data fetch...');
             const retryAjaxUrl = getAjaxUrl();
             
             if (retryAjaxUrl) {
                 fetchSessionsData(sessionIds, retryAjaxUrl)
                     .then(sessions => {
-                        console.log('Retry successful, updating display with proper session data');
                         renderDiarySessions(sessions, container, config);
                     })
                     .catch(error => {
@@ -628,14 +579,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const showRemoveButtons = config.showRemoveButtons;
         const modalId = 'diary-modal-' + session.id;
         
-        console.log('Rendering session card:', {
-            sessionId: session.id,
-            title: session.title,
-            showDetails: showDetails,
-            hasContent: !!session.content,
-            contentLength: session.content ? session.content.length : 0
-        });
-        
         let html = `<div class="diary-session" data-session-id="${session.id}">`;
         
         // Session header with track info only (time is displayed in title)
@@ -663,12 +606,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const fullContent = stripHtmlTags(session.content);
             const maxLength = 150;
             
-            console.log('Session content processing:', {
-                originalLength: session.content.length,
-                strippedLength: fullContent.length,
-                willTruncate: fullContent.length > maxLength
-            });
-            
             if (fullContent.length > maxLength) {
                 // Content is long, show truncated with "more..." link
                 const shortContent = fullContent.substring(0, maxLength) + '...';
@@ -685,7 +622,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += `<div class="diary-session-details">${fullContent}</div>`;
             }
         } else if (showDetails && !session.content) {
-            console.warn('Session has no content to display:', session.id);
             html += `<div class="diary-session-details">No details available for this session.</div>`;
         } else {
             console.log('Details hidden due to config.showDetails =', showDetails);
@@ -697,7 +633,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         html += '</div>';
-        console.log('Generated HTML for session', session.id, ':', html.substring(0, 200) + '...');
         return html;
     }
 
