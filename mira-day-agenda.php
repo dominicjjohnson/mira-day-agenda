@@ -78,6 +78,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Include the display & data functions file
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/cpt.php';
+require_once plugin_dir_path( __FILE__ ) . 'assets/lib/admin.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin_simple.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/display_functions.php';
 require_once plugin_dir_path( __FILE__ ) . 'assets/lib/data_functions.php';
@@ -1040,9 +1041,6 @@ function mira_agenda_grid_old_enqueue_assets() {
   );
 
   // Enqueue the JS file
-
-
-  /*
     wp_enqueue_script(
       'mira-day-agenda',
       plugin_dir_url(__FILE__) . 'assets/js/mira-day-agenda.js',
@@ -1050,8 +1048,6 @@ function mira_agenda_grid_old_enqueue_assets() {
       null,
       true
   );
-
-*/
 
   // Conditionally enqueue MyDiary assets only if enabled
   if (mira_agenda_is_my_diary_enabled()) {

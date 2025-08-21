@@ -640,7 +640,7 @@ function get_sponsored_sessions($args) {
       $sponsor_id = get_post_meta($session_id, 'sponsor_id', true);
       if ($sponsor_id) {
         $sponsor_name = get_the_title($sponsor_id);
-        $sponsor_logo = get_the_post_thumbnail_url($sponsor_id, 'thumbnail');
+        $sponsor_logo = get_the_post_thumbnail_url($sponsor_id, 'large');
         $sponsor_url = get_post_meta($sponsor_id, 'sponsor_url', true);
         $sponsor_content = get_post_field('post_content', $sponsor_id);
 
@@ -972,7 +972,15 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   $link_on_title = "";
 
   // Get character limit from settings (defaults to 200 if not set)
-  $ALL_TRACKS_CONTENT_LENGTH = function_exists('mira_agenda_get_char_limit') ? mira_agenda_get_char_limit() : 200;
+  $ALL_TRACKS_CONTENT_LENGTH = 100;
+  if (function_exists('mira_agenda_get_char_limit')) {
+    $limit = mira_agenda_get_char_limit();
+    if (is_numeric($limit) && intval($limit) > 0) {
+      $ALL_TRACKS_CONTENT_LENGTH = intval($limit);
+    }
+  }
+
+
   $full_content = strip_tags($post_content);
   
   // Check if there's meaningful content (more than just whitespace)
@@ -1149,23 +1157,24 @@ function get_sponsor_content ( $sponsored_session ) {
     $url = esc_url($sponsored_session['sponsor_url'] ?? '');
     $content = wp_kses_post($sponsored_session['sponsor_content'] ?? '');
 
-    $html = '<div class="sponsor-box" style="border:1px solid #dedede;padding:1em;margin-bottom:1em;background:#f9f9f9;">';
-    if ($url) {
-      $html .= '<a href="' . $url . '" target="_blank" style="text-decoration:none;">';
-    }
-    if ($logo) {
-      $html .= '<img src="' . $logo . '" alt="' . $name . '" style="max-height:40px;vertical-align:middle;margin-right:10px;">';
-    }
-    if ($name) {
-      $html .= '<strong style="font-size:1.1em;">' . $name . '</strong>';
-    }
-    if ($url) {
-      $html .= '</a>';
-    }
-    if ($content) {
-      $html .= '<div class="sponsor-content" style="margin-top:0.5em;">' . $content . '</div>';
-    }
-    $html .= '</div>';
+    // Add CSS for sponsor-box and related classes
+
+        $html = '';
+        $html .= '<div class="sponsor-box">';
+        if ($name) {
+          if ($url) {
+          $html .= '<div class="sponsor-title"><a href="' . $url . '" target="_blank">' . $name . '</a></div>';
+          } else {
+          $html .= '<div class="sponsor-title">' . $name . '</div>';
+          }
+        }
+        if ($logo) {
+          $html .= '<div class="sponsor-logo"><img src="' . $logo . '" alt="' . $name . '"></div>';
+        }
+        if ($content) {
+          $html .= '<div class="sponsor-content">' . $content . '</div>';
+        }
+        $html .= '</div>';
 
     return $html;
   }
