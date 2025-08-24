@@ -1049,6 +1049,7 @@ function mira_agenda_grid_old_enqueue_assets() {
       true
   );
 
+
   // Conditionally enqueue MyDiary assets only if enabled
   if (mira_agenda_is_my_diary_enabled()) {
     // Enqueue MyDiary CSS
@@ -1090,6 +1091,7 @@ function mira_agenda_grid_old_enqueue_assets() {
   );
 }
 add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets', 5 ); // Higher priority (earlier execution)
+
 
 // Enqueue unload policy fix for admin/WP Bakery backend
 function mira_agenda_admin_enqueue_assets() {

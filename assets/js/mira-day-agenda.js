@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
+	// Details modal
 	document.querySelectorAll(".more-details-link").forEach(function (link) {
 		const modalId = link.getAttribute("data-modal");
 		const modal = document.getElementById(modalId);
 		const close = modal ? modal.querySelector(".close-modal") : null;
-		const closeSpeaker = modal ? modal.querySelector(".close-speaker-modal") : null;
 
-		if (modal && (close || closeSpeaker)) {
+		if (modal && close) {
 			link.addEventListener("click", function (e) {
 				e.preventDefault();
 				modal.style.display = "block";
@@ -17,6 +17,27 @@ document.addEventListener("DOMContentLoaded", function () {
 					modal.style.display = "none";
 				});
 			}
+
+			window.addEventListener("click", function (event) {
+				if (event.target === modal) {
+					modal.style.display = "none";
+				}
+			});
+		}
+	});
+
+	// Speaker modal
+	/*
+	document.querySelectorAll(".more-speakers-link").forEach(function (link) {
+		const modalId = link.getAttribute("data-modal");
+		const modal = document.getElementById(modalId);
+		const closeSpeaker = modal ? modal.querySelector(".close-speaker-modal") : null;
+
+		if (modal && (closeSpeaker)) {
+			link.addEventListener("click", function (e) {
+				e.preventDefault();
+				modal.style.display = "block";
+			});
 
 			if (closeSpeaker) {
 				closeSpeaker.addEventListener("click", function (e) {
@@ -39,4 +60,5 @@ document.addEventListener("DOMContentLoaded", function () {
 			});
 		}
 	});
+	*/
 });

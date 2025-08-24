@@ -859,9 +859,9 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         $output .= '<div class="speaker" style="display: flex; align-items: flex-start; gap: 0.7em; margin-bottom: 0.6em;">';
         if ($speaker_image) {
           $output .= '<img src="' . esc_url($speaker_image) . '" alt="' . esc_attr($speaker_name) . '" '
-        . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;">';
+            . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
+            . 'class="speaker-img-clickable" data-modal="' . esc_attr($modal_id) . '">';
         }
-        // Speaker name (not clickable)
         $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
         $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
         if ($speaker_job) {
@@ -872,45 +872,61 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         }
         $output .= '</p>';
         $output .= '</div>';
-   // Modal HTML (hidden by default) - fully reverted to original logic
-    $output .= '<div id="' . esc_attr($modal_id) . '" class="speaker-modal" style="display:block;visibility:hidden;position:fixed;z-index:9999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);"'
-      . '<div style="background:#fff;max-width:350px;margin:10vh auto;padding:2em;position:relative">'
-      . '<span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>'
-      . '<h4 style="margin-top:0;"><a href="' . esc_url(get_permalink($speaker_post->ID)) . '" target="_blank" style="color:inherit;text-decoration:underline;cursor:pointer;">' . esc_html($speaker_name) . '</a></h4>'
-      . '<p style="margin-bottom:0.7em;">' . esc_html($speaker_bio) . '</p>'
-      . '</div>'
-      . '</div>';
-  $output .= '<script>
-    document.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
-        img.addEventListener("click", function() {
-          var modal = document.getElementById(img.getAttribute("data-modal"));
-          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
-        });
-      });
-      document.querySelectorAll(".speaker-name-clickable").forEach(function(name) {
-        name.addEventListener("click", function() {
-          var modal = document.getElementById(name.getAttribute("data-modal"));
-          if (modal) { modal.style.visibility = "visible"; document.body.style.overflow = "hidden"; }
-        });
-      });
-      document.body.addEventListener("click", function(e) {
-        if (e.target.classList && e.target.classList.contains("close-speaker-modal")) {
-          var modalId = e.target.getAttribute("data-modal");
-          var modal = document.getElementById(modalId);
-          if (modal) modal.style.visibility = "hidden";
-          document.body.style.overflow = "";
-          e.preventDefault();
+        // Modal HTML (hidden by default)
+        $output .= '
+        <div id="' . esc_attr($modal_id) . '" class="modal" >
+          <div class="modal-content ">
+            <span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>
+            <div class="speaker-modal-content">
+              <h4 class="speaker-modal-name">' . esc_html($speaker_name) . '</h4>
+              <p class="speaker-modal-job-company">
+              ' . (!empty($speaker_job) ? esc_html($speaker_job) : '') . 
+              (!empty($speaker_company) ? ', <i>' . esc_html($speaker_company) . '</i>' : '') . '
+              </p>
+              <p class="speaker-modal-bio">' . esc_html($speaker_bio) . '</p>
+            </div>
+            
+          </div>
+        </div>
+        ';
+
+        // Add JS and only once per page (outside the loop)
+        static $speaker_modal_script_output = false;
+        if (!$speaker_modal_script_output) {
+          $output .= '
+          <style>
+            .speaker-img-clickable:hover {
+              transform: scale(1.05);
+              box-shadow: 0 0 0 2px #0073aa33;
+            }
+            .speaker-modal { animation: fadeInSpeakerModal 0.2s; }
+            @keyframes fadeInSpeakerModal { from { opacity: 0; } to { opacity: 1; } }
+          </style>
+          <script>
+            document.addEventListener("DOMContentLoaded", function() {
+              document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
+          img.addEventListener("click", function() {
+            var modal = document.getElementById(img.getAttribute("data-modal"));
+            if (modal) modal.style.display = "block";
+          });
+              });
+              document.querySelectorAll(".close-speaker-modal").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            var modal = document.getElementById(btn.getAttribute("data-modal"));
+            if (modal) modal.style.display = "none";
+          });
+              });
+              window.addEventListener("click", function(event) {
+          if (event.target.classList && event.target.classList.contains("speaker-modal")) {
+            event.target.style.display = "none";
+          }
+              });
+            });
+          </script>
+          ';
+          $speaker_modal_script_output = true;
         }
-      });
-      window.addEventListener("click", function(event) {
-        if (event.target.classList && event.target.classList.contains("speaker-modal")) {
-          event.target.style.visibility = "hidden";
-          document.body.style.overflow = "";
-        }
-      });
-    });
-  </script>';
+        $output .= '</div>';
 
       }
 
