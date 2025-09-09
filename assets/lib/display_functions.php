@@ -196,7 +196,7 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   }
   
   $output .= "\n  @media screen and (min-width:700px) {\n";
-  $output .= "    .schedule {\n";
+  $output .= "    .schedule-{$inputs['day']} {\n";
   $output .= "      display: grid;\n";
   $output .= "      grid-gap: 0.25em;\n";
   $output .= "      grid-template-rows:\n";

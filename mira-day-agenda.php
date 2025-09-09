@@ -467,11 +467,12 @@ function mira_agenda_grid_old_shortcode($atts) {
     $sessions = get_grid_session_data($data,$inputs['trackslugs'],$inputs['all-tracks']);
 
     $time_slots = get_time_slots($data);
+    echo get_css_slots($time_slots, $track_background_colour, $track_text_colour, $inputs);
 
-    echo get_css_slots($time_slots,$track_background_colour,$track_text_colour,$inputs); 
+    // Sanitize the day value for use in a class name
+    $day_class = 'schedule-' . sanitize_title_with_dashes($inputs['day']);
 
-    echo '<div class="schedule" aria-labelledby="schedule-heading">';
-        
+    echo '<div class="schedule ' . esc_attr($day_class) . '" aria-labelledby="schedule-heading">'; 
     echo print_times($time_slots);
 
     echo display_grid($sessions,$inputs,$headings, $track_background_colour, $sponsored_sessions); 
