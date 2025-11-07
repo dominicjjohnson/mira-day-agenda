@@ -1,4 +1,3 @@
-
 <?php
 /**
  * Plugin Name: Mira Day Agenda
@@ -6,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.30
+ * Version: 1.31
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -65,6 +64,9 @@
     6. Added comprehensive debugging and error reporting for AJAX functionality
     7. Fixed WP Bakery element registration with proper parameter handling
     8. My Diary now displays real session titles, times, dates, and track information
+    
+ * Version 1.31 2025-10-29 - Fixed so it works with 2 tabs - 2 schedules   
+    
  
  */
  
@@ -470,7 +472,8 @@ function mira_agenda_grid_old_shortcode($atts) {
 
     echo get_css_slots($time_slots,$track_background_colour,$track_text_colour,$inputs); 
 
-    echo '<div class="schedule" aria-labelledby="schedule-heading">';
+    $day = $inputs['day'];
+    echo '<div class="schedule_'.$day.'" aria-labelledby="schedule-heading">';
         
     echo print_times($time_slots);
 

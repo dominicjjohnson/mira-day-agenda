@@ -188,15 +188,21 @@ function _safe_val($arr, $key, $default = '') {
 
 function get_css_slots ($time_slots, $track_background_colour, $track_text_colour,$inputs) {
     
-  $output = "<style>\n";
+    
+    
+  $output = '<!-- DEBUG: in get_ss Attributes: ' . print_r($inputs, true) . ' -->';
+    
+  $output .= "<style>\n";
   
   // Turn off display of times on the left hand side if flag set.
   if (!$inputs['time_slot_side']) {
     $output .= ".time-slot { display: none; } \n";
   }
   
+  $day = $inputs['day'];
+  
   $output .= "\n  @media screen and (min-width:700px) {\n";
-  $output .= "    .schedule {\n";
+  $output .= "    .schedule_{$day} {\n";
   $output .= "      display: grid;\n";
   $output .= "      grid-gap: 0.25em;\n";
   $output .= "      grid-template-rows:\n";
