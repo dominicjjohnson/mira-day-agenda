@@ -862,39 +862,45 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         // Unique modal ID for this speaker
         $modal_id = 'speaker-modal-' . $speaker_post->ID;
 
-        $output .= '<div class="speaker" style="display: flex; align-items: flex-start; gap: 0.7em; margin-bottom: 0.6em;">';
-        if ($speaker_image) {
-          $output .= '<img src="' . esc_url($speaker_image) . '" alt="' . esc_attr($speaker_name) . '" '
-            . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
-            . 'class="speaker-img-clickable" data-modal="' . esc_attr($modal_id) . '">';
-        }
-        $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
-        $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
-        if ($speaker_job) {
-          $output .= '<br>' . esc_html($speaker_job);
-        }
-        if ($speaker_company) {
-          $output .= ', <i>' . esc_html($speaker_company) . "</i>";
-        }
-        $output .= '</p>';
-        $output .= '</div>';
-        // Modal HTML (hidden by default)
-        $output .= '
-        <div id="' . esc_attr($modal_id) . '" class="modal" >
-          <div class="modal-content ">
-            <span class="close-speaker-modal" data-modal="' . esc_attr($modal_id) . '" style="position:absolute;top:10px;right:15px;font-size:1.5em;cursor:pointer;">&times;</span>
-            <div class="speaker-modal-content">
-              <h4 class="speaker-modal-name">' . esc_html($speaker_name) . '</h4>
-              <p class="speaker-modal-job-company">
-              ' . (!empty($speaker_job) ? esc_html($speaker_job) : '') . 
-              (!empty($speaker_company) ? ', <i>' . esc_html($speaker_company) . '</i>' : '') . '
-              </p>
-              <p class="speaker-modal-bio">' . esc_html($speaker_bio) . '</p>
-            </div>
-            
-          </div>
-        </div>
-        ';
+ // Prepare the speaker modal content
+ $speaker_modal_content = '<div class="speaker-modal-details">'
+                        . '<h4 class="speaker-modal-name">' . esc_html($speaker_name) . '</h4>'
+                        . '<p class="speaker-modal-job-company">'
+                        . (!empty($speaker_job) ? esc_html($speaker_job) : '')
+                        . (!empty($speaker_company) ? ', <i>' . esc_html($speaker_company) . '</i>' : '')
+                        . '</p>'
+                        . '<p class="speaker-modal-bio">' . nl2br(esc_html($speaker_bio)) . '</p>'
+                        . '</div>';
+ 
+ $output .= '<div class="speaker" style="display: flex; align-items: flex-start; gap: 0.7em; margin-bottom: 0.6em;">';
+ 
+ if ($speaker_image) {
+     $output .= '<img src="' . esc_url($speaker_image) . '" '
+              . 'alt="' . esc_attr($speaker_name) . '" '
+              . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
+              . 'class="speaker-img-clickable mira-modal-trigger" '
+              . 'data-modal-id="modalPopup" '
+              . 'data-modal-content="' . esc_attr($speaker_modal_content) . '">';
+ }
+ 
+ $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
+ $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
+ 
+ if ($speaker_job) {
+    $output .= '<br>' . esc_html($speaker_job);
+ }
+ 
+  if ($speaker_job && ($speaker_company) ) {
+    $output .= ', ';
+  }
+ 
+ if ($speaker_company) {
+     $output .= '<i>' . esc_html($speaker_company) . "</i>";
+ }
+ 
+ $output .= '</p>';
+ $output .= '</div>';
+ $output .= '</div>'; // Close speaker div
 
         // Add JS and only once per page (outside the loop)
         static $speaker_modal_script_output = false;
@@ -1013,27 +1019,25 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     // For long content, truncate and add "more..." link
     if (mb_strlen($full_content) > $ALL_TRACKS_CONTENT_LENGTH) {
       $short_content = mb_substr($full_content, 0, $ALL_TRACKS_CONTENT_LENGTH) . '...';
-      $post_content = $short_content . ' <i class="fas fa-info-circle" aria-hidden="true"></i> <a href="#" class="more-details-link" data-modal="' . $modal_id . '">  more....</a>';
+      $post_content = $short_content;
+
+// Prepare the popup content
+      $popup_content = '<div class="session-details">'
+                     . '<span class="title"><b>' . esc_html($sessions[$rowID]['sessionsTitle']) . '</b></span>'
+                     . '<div class="session-content">' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>'
+                     . '</div>';
+      
+      // Create the button with data attribute (NOT onclick)
+      $button = '<i class="fas fa-info-circle" aria-hidden="true"></i><a href="#" 
+                    class="more-details-link mira-modal-trigger" 
+                    data-modal-id="modalPopup"
+                    data-modal-content="' . esc_attr($popup_content) . '">
+                    more...
+                 </a>';
+      
+      $post_content .= " " . $button;
+
     }
-    
-    /*
-      if link_title_to_details param is true then set $link_on_title to the details page
-      if not then link to the modal popup.
-    */
-    if (!$inputs['link_title_to_details']) {
-      $link_on_title = '<a href="#" class="more-details-link" data-modal="' . $modal_id . '">';
-    }   
-    
-    // Modal HTML (hidden by default) - always create for meaningful content
-    $post_content .= '
-        <div id="' . $modal_id . '" class="modal" style="display:none;">
-          <div class="modal-content">
-            <span class="close-modal" data-modal="' . $modal_id . '">&times;</span>
-            <div class="modal-body" style="margin: 20px;">
-            <span class="title"><b>'.esc_html($sessions[$rowID]['sessionsTitle']).'</b></span>
-            ' . apply_filters('the_content', get_post_field('post_content', $session_id)) . '</div>
-          </div>
-        </div>';
   }
 
   // This is a special case for the all-tracks session

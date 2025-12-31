@@ -9,6 +9,21 @@ document.addEventListener("DOMContentLoaded", function () {
 			link.addEventListener("click", function (e) {
 				e.preventDefault();
 				modal.style.display = "block";
+				
+const modal = document.querySelector('.modal-content');
+				
+				window.addEventListener('mousemove', e => {
+				  if (!modal) return;
+				
+				  const rect = modal.getBoundingClientRect();
+				  const offsetY = e.clientY - rect.top;
+				
+				  console.log('Mouse Y relative to modal top:', offsetY);
+				});
+
+
+				
+				
 			});
 
 			if (close) {

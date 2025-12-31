@@ -297,8 +297,8 @@
 /* Enhanced modal content with positioning to avoid header overlap */
 .modal .modal-content {
     position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
+    top: 36% !important;
+    left: 28% !important;
     transform: translate(-50%, -50%) !important;
     background-color: #fefefe;
     border: 1px solid #888;

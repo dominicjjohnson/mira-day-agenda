@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.31
+ * Version: 1.32
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -67,11 +67,12 @@
     
  * Version 1.31 2025-10-29 - Fixed so it works with 2 tabs - 2 schedules   
     
+ * Version 1.32 2025-12-30 - Changed the modal code. Create a shortcode called "mira_modal" 
  
  */
  
 define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.30"); // Updated version - matches plugin header
+define('VERSION', "1.32"); // Updated version - matches plugin header
 
  // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -1052,7 +1053,6 @@ function mira_agenda_grid_old_enqueue_assets() {
       true
   );
 
-
   // Conditionally enqueue MyDiary assets only if enabled
   if (mira_agenda_is_my_diary_enabled()) {
     // Enqueue MyDiary CSS
@@ -1069,6 +1069,23 @@ function mira_agenda_grid_old_enqueue_assets() {
     wp_enqueue_script(
         'mira-mydiary-script',
         plugin_dir_url(__FILE__) . 'assets/js/mydiary.js',
+        array(),
+        DEVMODE ? time() : VERSION,
+        true
+    );
+
+    wp_enqueue_style(
+        'mira-modal-style',
+        plugins_url('assets/css/mira-modal.css', __FILE__),
+        array(),
+        DEVMODE ? time() : VERSION,
+        'all'
+    );
+    
+
+    wp_enqueue_script(
+        'mira-modal-script',
+        plugin_dir_url(__FILE__) . 'assets/js/mira-modal.js',
         array(),
         DEVMODE ? time() : VERSION,
         true
@@ -1146,4 +1163,32 @@ function mira_agenda_add_console_debug() {
 add_action( 'wp_head', 'mira_agenda_add_console_debug' );
 add_action( 'admin_head', 'mira_agenda_add_console_debug' );
 
+/**
+ * Modal Popup Shortcode for Mira Day Agenda
+ * Add this to your mira-day-agenda plugin
+ */
+
+// Register and enqueue scripts and styles
+
+
+// Shortcode function
+function mira_modal_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'id' => 'modalPopup'
+    ), $atts);
+    
+    ob_start();
+    ?>
+    <div id="<?php echo esc_attr($atts['id']); ?>" class="mira-modal-overlay">
+        <div class="mira-modal-container">
+            <span class="mira-modal-close">&times;</span>
+            <div class="mira-modal-content">
+                <!-- Content will be inserted here via jQuery -->
+            </div>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+add_shortcode('mira_modal', 'mira_modal_shortcode');
 
