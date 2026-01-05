@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.32
+ * Version: 1.33
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -68,6 +68,8 @@
  * Version 1.31 2025-10-29 - Fixed so it works with 2 tabs - 2 schedules   
     
  * Version 1.32 2025-12-30 - Changed the modal code. Create a shortcode called "mira_modal" 
+ 
+ * Version 1.33 2025-01-05 - Added an option to MyAgenda button 
  
  */
  
