@@ -69,8 +69,11 @@
     
  * Version 1.32 2025-12-30 - Changed the modal code. Create a shortcode called "mira_modal" 
  
- * Version 1.33 2026-01-06 - Fixing issue with media grid.
-  
+
+ * Version 1.33 2025-01-05 - Added an option to MyAgenda button 
+ 
+ * Version 1.34 2026-01-06 - Fixing issue with media grid.
+ 
  
  */
  

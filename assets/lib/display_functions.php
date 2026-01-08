@@ -1050,7 +1050,17 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   }
 
   if ($sessions[$rowID]['trackID'] == "track-all") {
-    $mydiary_button = generate_mydiary_button($session_id);
+    
+    $options = get_option('mira_agenda_settings', []);
+    $use_myagenda = isset($options['use_myagenda']) ? $options['use_myagenda'] : false;
+    
+    if ($use_myagenda) {
+      $mydiary_button = generate_mydiary_button($session_id);
+    }
+    else {
+      $mydiary_button = "";
+    }
+    
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
 
@@ -1089,7 +1099,12 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     // removed       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
     
-    $mydiary_button = generate_mydiary_button($session_id);
+    if ($use_myagenda) {
+      $mydiary_button = generate_mydiary_button($session_id);
+    }
+    else {
+      $mydiary_button = "";
+    }
 
     $output = <<<HTML
     
