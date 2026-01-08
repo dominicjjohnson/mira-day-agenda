@@ -89,3 +89,35 @@
 .mira-modal-content::-webkit-scrollbar-thumb:hover {
 	background: #555;
 }
+
+.speaker-img-clickable:hover {
+	transform: scale(1.1);
+}
+
+.speaker-modal-details {
+	text-align: center;
+}
+
+.speaker-modal-name {
+	margin-top: 0;
+	margin-bottom: 10px;
+	font-size: 1.5em;
+}
+
+.speaker-modal-job-company {
+	color: #666;
+	margin-bottom: 20px;
+}
+
+.speaker-modal-bio {
+	text-align: left;
+	line-height: 1.6;
+}
+
+/* Make it single column on mobile */
+@media (max-width: 768px) {
+	.speakers-grid {
+		grid-template-columns: 1fr !important;
+	}
+}
+

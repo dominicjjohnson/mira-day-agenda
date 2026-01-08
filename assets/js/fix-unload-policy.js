@@ -5,15 +5,30 @@
  * 
  * Conservative version - only targets WP Bakery specific issues.
  */
-
 (function() {
     'use strict';
+    
+    // Skip on media library and other non-WP Bakery pages
+    if (window.location.href.indexOf('upload.php') !== -1 || 
+        window.location.href.indexOf('media-upload.php') !== -1 ||
+        window.location.href.indexOf('media-new.php') !== -1) {
+        console.log('Mira: Skipping unload fix on media library');
+        return;
+    }
+    
+    // Only run if we're in WP Bakery context
+    if (!window.vc && !window.vc_editor && !window.location.href.includes('vc_editable')) {
+        console.log('Mira: Not in WP Bakery context, skipping unload fix');
+        return;
+    }
     
     // Safety flag to prevent multiple executions
     if (window.miraUnloadPolicyFixed) {
         return;
     }
     window.miraUnloadPolicyFixed = true;
+    
+    console.log('Mira: WP Bakery backend detected - applying unload fix');
     
     // Only target WP Bakery specific beforeunload events
     function isWPBakeryRelated(type, events) {
