@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.32
+ * Version: 1.34
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -69,11 +69,27 @@
     
  * Version 1.32 2025-12-30 - Changed the modal code. Create a shortcode called "mira_modal" 
  
+ * Version 1.33 2026-01-06 - Fixing issue with media grid.
+ 
+ * Version 1.34 2026-01-12 - DEV VERSION  Merged
+  
+  
+ 
  */
  
-define('DEVMODE', true); // Set to false on production
-define('VERSION', "1.32"); // Updated version - matches plugin header
-
+ define('DEVMODE', true); // Set to false on production
+ define('VERSION', "1.33"); // Updated version - matches plugin header
+ 
+ // Add at the very top of your plugin file, right after the opening <?php tag
+ add_action('admin_enqueue_scripts', function() {
+     global $pagenow;
+     if ($pagenow === 'upload.php') {
+         wp_dequeue_script('mira-unload-policy-fix');
+         wp_dequeue_script('mira-unload-policy-fix-admin');
+     }
+ }, 999);
+ 
+ 
  // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -1025,37 +1041,34 @@ function mira_agenda_grid_old_enqueue_assets() {
   if ( ! defined( 'DEVMODE' ) ) {
       define( 'DEVMODE', true );
   }
-
-  // Only enqueue assets if DEVMODE is true
-  // Enqueue the CSS file
   
-    if (DEVMODE) {
-        $css_url = 'assets/css/mira-day-agenda.css?'.time();
-    }
-    else {
-        $css_url = 'assets/css/mira-day-agenda.css?'.VERSION;
-    }
+  // Enqueue the CSS file
+  if (DEVMODE) {
+      $css_url = 'assets/css/mira-day-agenda.css?'.time();
+  }
+  else {
+      $css_url = 'assets/css/mira-day-agenda.css?'.VERSION;
+  }
   
   wp_enqueue_style(
-      'mira-day-agenda-style', // Handle for the CSS file
-      plugins_url( $css_url, __FILE__ ), // Path to the CSS file
-      array(), // Dependencies (none)
-      DEVMODE ? time() : '2.0', // Use time() as the version for cache-busting if DEVMODE is true
-      'all' // Media type
+      'mira-day-agenda-style',
+      plugins_url( $css_url, __FILE__ ),
+      array(),
+      DEVMODE ? time() : '2.0',
+      'all'
   );
-
+  
   // Enqueue the JS file
-    wp_enqueue_script(
+  wp_enqueue_script(
       'mira-day-agenda',
       plugin_dir_url(__FILE__) . 'assets/js/mira-day-agenda.js',
       array(),
       null,
       true
   );
-
+  
   // Conditionally enqueue MyDiary assets only if enabled
   if (mira_agenda_is_my_diary_enabled()) {
-    // Enqueue MyDiary CSS
     wp_enqueue_style(
         'mira-mydiary-style',
         plugins_url('assets/css/mydiary.css', __FILE__),
@@ -1063,8 +1076,6 @@ function mira_agenda_grid_old_enqueue_assets() {
         DEVMODE ? time() : VERSION,
         'all'
     );
-
-    // Enqueue MyDiary JS
    
     wp_enqueue_script(
         'mira-mydiary-script',
@@ -1073,7 +1084,7 @@ function mira_agenda_grid_old_enqueue_assets() {
         DEVMODE ? time() : VERSION,
         true
     );
-
+    
     wp_enqueue_style(
         'mira-modal-style',
         plugins_url('assets/css/mira-modal.css', __FILE__),
@@ -1082,7 +1093,6 @@ function mira_agenda_grid_old_enqueue_assets() {
         'all'
     );
     
-
     wp_enqueue_script(
         'mira-modal-script',
         plugin_dir_url(__FILE__) . 'assets/js/mira-modal.js',
@@ -1091,65 +1101,72 @@ function mira_agenda_grid_old_enqueue_assets() {
         true
     );
     
-    // Localize script to provide AJAX URL to frontend
     wp_localize_script('mira-mydiary-script', 'mira_diary_ajax', array(
         'ajaxurl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('diary_nonce')
     ));
     
-    // Add simple debugging script
     wp_add_inline_script('mira-mydiary-script', 'console.log("MyDiary JS loaded successfully"); console.log("AJAX URL:", mira_diary_ajax.ajaxurl);');
   }
-
-  // Enqueue unload policy fix (loads early to fix WP Bakery beforeunload issues)
+  
+  // Enqueue unload policy fix for frontend only
   wp_enqueue_script(
       'mira-unload-policy-fix',
       plugin_dir_url(__FILE__) . 'assets/js/fix-unload-policy.js',
       array(),
       DEVMODE ? time() : VERSION,
-      false // Load in head to ensure it runs before other scripts
+      false
   );
 }
-add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets', 5 ); // Higher priority (earlier execution)
+add_action( 'wp_enqueue_scripts', 'mira_agenda_grid_old_enqueue_assets', 5 );
 
-
-// Enqueue unload policy fix for admin/WP Bakery backend
+// Enqueue unload policy fix ONLY for WP Bakery backend editor
 function mira_agenda_admin_enqueue_assets() {
-    // Only load on admin pages and WP Bakery editor
-    if (is_admin() || (isset($_GET['vc_editable']) && $_GET['vc_editable'])) {
+    global $pagenow;
+    
+    // Exclude media library pages
+    if ($pagenow === 'upload.php' || $pagenow === 'media-upload.php') {
+        return;
+    }
+    
+    // Only load on WP Bakery editor pages
+    if (isset($_GET['vc_editable']) && $_GET['vc_editable']) {
         wp_enqueue_script(
             'mira-unload-policy-fix-admin',
             plugin_dir_url(__FILE__) . 'assets/js/fix-unload-policy.js',
             array(),
             DEVMODE ? time() : VERSION,
-            false // Load in head
+            false
         );
     }
 }
 add_action( 'admin_enqueue_scripts', 'mira_agenda_admin_enqueue_assets', 5 );
-add_action( 'wp_enqueue_scripts', 'mira_agenda_admin_enqueue_assets', 1 ); // Very early priority
+// REMOVED: The duplicate wp_enqueue_scripts hook
 
 // Add Permissions Policy header to allow unload events (for WP Bakery compatibility)
-function mira_agenda_set_permissions_policy() {
-    // Only apply on admin pages or when WP Bakery editor is active
-    if (is_admin() || (isset($_GET['vc_editable']) && $_GET['vc_editable']) || 
-        (isset($_GET['vc_action']) && $_GET['vc_action']) ||
-        (function_exists('vc_mode') && vc_mode())) {
-        
-        // Note: beforeunload is not a valid Permissions Policy feature
-        // The browser restriction is handled by our JavaScript fix instead
-        // header('Permissions-Policy: unload=*');
-        
-        // Instead, we'll use a more targeted approach via JavaScript
-        // Only output this during normal page loads, not AJAX requests
-        if (!wp_doing_ajax()) {
-            echo "<script>console.log('Mira Unload Fix: Script enqueued for WP Bakery context');</script>\n";
-        }
-    }
-}
-add_action( 'init', 'mira_agenda_set_permissions_policy', 1 );
+ function mira_agenda_set_permissions_policy() {
+     global $pagenow;
+     
+     // Skip on media library and other non-WP Bakery pages
+     if ($pagenow === 'upload.php' || $pagenow === 'media-upload.php' || $pagenow === 'media-new.php') {
+         return;
+     }
+     
+     // Only apply when WP Bakery editor is actually active
+     if ((isset($_GET['vc_editable']) && $_GET['vc_editable']) || 
+         (isset($_GET['vc_action']) && $_GET['vc_action']) ||
+         (function_exists('vc_mode') && vc_mode())) {
+         
+         // Only output this during normal page loads, not AJAX requests
+         if (!wp_doing_ajax()) {
+             echo "<script>console.log('Mira Unload Fix: Script enqueued for WP Bakery context');</script>\n";
+         }
+     }
+ }
+ add_action( 'init', 'mira_agenda_set_permissions_policy', 1 );
 
 // Console logging for debugging the unload policy fix
+/* V 1.33
 function mira_agenda_add_console_debug() {
     if (DEVMODE && (is_admin() || (isset($_GET['vc_editable']) && $_GET['vc_editable']))) {
         echo "<script>\n";
@@ -1162,6 +1179,8 @@ function mira_agenda_add_console_debug() {
 }
 add_action( 'wp_head', 'mira_agenda_add_console_debug' );
 add_action( 'admin_head', 'mira_agenda_add_console_debug' );
+
+*/
 
 /**
  * Modal Popup Shortcode for Mira Day Agenda

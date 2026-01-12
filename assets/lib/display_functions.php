@@ -843,109 +843,79 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
     if (!empty($speakers)) {
       $output .= '<div class="role-column" style="flex: 1">';
       $output .= '<p class="speaker-role-title">' . $role_title . '</p>';
+      
+      // Start 2-column grid for speakers
+      $output .= '<div class="speakers-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7em;">';
 
       foreach ($speakers as $speaker_post) {
         if (empty($speaker_post) || !is_numeric($speaker_post->ID)) {
           continue;
         }
+        
         $speaker_name = get_the_title($speaker_post->ID);
         $speaker_image = get_the_post_thumbnail_url($speaker_post->ID, 'thumbnail');
         $speaker_job = get_post_meta($speaker_post->ID, 'speaker_speaker_job_title', true);
         $speaker_company = get_post_meta($speaker_post->ID, 'speaker_company_name', true);
-        // Use a shorter limit for speaker bios (half of the main content limit)
-        $SPEAKER_BIO_SUMMERY_LENGTH = function_exists('mira_agenda_get_char_limit') ? (int)(mira_agenda_get_char_limit() / 5) : 40;
+        
+        // Get the FULL bio for the modal
         $speaker_bio_full = strip_tags(get_post_field('post_content', $speaker_post->ID));
-        $speaker_bio = mb_strlen($speaker_bio_full) > $SPEAKER_BIO_SUMMERY_LENGTH
-        ? mb_substr($speaker_bio_full, 0, $SPEAKER_BIO_SUMMERY_LENGTH) . '...'
-        : $speaker_bio_full;
+        
+        // Use a shorter limit for display (not modal)
+        $SPEAKER_BIO_SUMMERY_LENGTH = function_exists('mira_agenda_get_char_limit') ? (int)(mira_agenda_get_char_limit() / 5) : 40;
+        $speaker_bio_short = mb_strlen($speaker_bio_full) > $SPEAKER_BIO_SUMMERY_LENGTH
+          ? mb_substr($speaker_bio_full, 0, $SPEAKER_BIO_SUMMERY_LENGTH) . '...'
+          : $speaker_bio_full;
 
-        // Unique modal ID for this speaker
-        $modal_id = 'speaker-modal-' . $speaker_post->ID;
-
- // Prepare the speaker modal content
- $speaker_modal_content = '<div class="speaker-modal-details">'
-                        . '<h4 class="speaker-modal-name">' . esc_html($speaker_name) . '</h4>'
-                        . '<p class="speaker-modal-job-company">'
-                        . (!empty($speaker_job) ? esc_html($speaker_job) : '')
-                        . (!empty($speaker_company) ? ', <i>' . esc_html($speaker_company) . '</i>' : '')
-                        . '</p>'
-                        . '<p class="speaker-modal-bio">' . nl2br(esc_html($speaker_bio)) . '</p>'
-                        . '</div>';
- 
- $output .= '<div class="speaker" style="display: flex; align-items: flex-start; gap: 0.7em; margin-bottom: 0.6em;">';
- 
- if ($speaker_image) {
-     $output .= '<img src="' . esc_url($speaker_image) . '" '
-              . 'alt="' . esc_attr($speaker_name) . '" '
-              . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
-              . 'class="speaker-img-clickable mira-modal-trigger" '
-              . 'data-modal-id="modalPopup" '
-              . 'data-modal-content="' . esc_attr($speaker_modal_content) . '">';
- }
- 
- $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
- $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
- 
- if ($speaker_job) {
-    $output .= '<br>' . esc_html($speaker_job);
- }
- 
-  if ($speaker_job && ($speaker_company) ) {
-    $output .= ', ';
-  }
- 
- if ($speaker_company) {
-     $output .= '<i>' . esc_html($speaker_company) . "</i>";
- }
- 
- $output .= '</p>';
- $output .= '</div>';
- $output .= '</div>'; // Close speaker div
-
-        // Add JS and only once per page (outside the loop)
-        static $speaker_modal_script_output = false;
-        if (!$speaker_modal_script_output) {
-          $output .= '
-          <style>
-            .speaker-img-clickable:hover {
-              transform: scale(1.05);
-              box-shadow: 0 0 0 2px #0073aa33;
-            }
-            .speaker-modal { animation: fadeInSpeakerModal 0.2s; }
-            @keyframes fadeInSpeakerModal { from { opacity: 0; } to { opacity: 1; } }
-          </style>
-          <script>
-            document.addEventListener("DOMContentLoaded", function() {
-              document.querySelectorAll(".speaker-img-clickable").forEach(function(img) {
-          img.addEventListener("click", function() {
-            var modal = document.getElementById(img.getAttribute("data-modal"));
-            if (modal) modal.style.display = "block";
-          });
-              });
-              document.querySelectorAll(".close-speaker-modal").forEach(function(btn) {
-          btn.addEventListener("click", function() {
-            var modal = document.getElementById(btn.getAttribute("data-modal"));
-            if (modal) modal.style.display = "none";
-          });
-              });
-              window.addEventListener("click", function(event) {
-          if (event.target.classList && event.target.classList.contains("speaker-modal")) {
-            event.target.style.display = "none";
-          }
-              });
-            });
-          </script>
-          ';
-          $speaker_modal_script_output = true;
+        // Prepare the speaker modal content - USE THE FULL BIO HERE
+        $speaker_modal_content = '<div class="speaker-modal-details">'
+                               . '<h4 class="speaker-modal-name">' . esc_html($speaker_name) . '</h4>'
+                               . '<p class="speaker-modal-job-company">'
+                               . (!empty($speaker_job) ? esc_html($speaker_job).", " : '')
+                               . (!empty($speaker_company) ? '<i>' . esc_html($speaker_company) . '</i>' : '')
+                               . '</p>'
+                               . '<p class="speaker-modal-bio">' . nl2br(esc_html($speaker_bio_full)) . '</p>'
+                               . '</div>';
+        
+        $output .= '<div class="speaker" style="display: flex; align-items: flex-start; gap: 0.7em;">';
+        
+        if ($speaker_image) {
+            $output .= '<img src="' . esc_url($speaker_image) . '" '
+                     . 'alt="' . esc_attr($speaker_name) . '" '
+                     . 'style="width:50px;height:50px;object-fit:cover;border-radius:50%;cursor:pointer;transition:transform 0.2s;" '
+                     . 'class="speaker-img-clickable mira-modal-trigger" '
+                     . 'data-modal-id="modalPopup" '
+                     . 'data-modal-content="' . esc_attr($speaker_modal_content) . '">';
         }
+        else {
+            // Placeholder space when no image exists
+            $output .= '<div style="width:50px;height:50px;flex-shrink:0;"></div>';
+        }
+        
+        $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
+        $output .= '<p style="margin:0;"><strong>' . esc_html($speaker_name) . '</strong>';
+        
+        if ($speaker_job) {
+          $output .= '<br>' . esc_html($speaker_job);
+        }
+        else {
+          $output .= ', ';
+        }
+        
+        if ($speaker_company) {
+            $output .= '<i>' . esc_html($speaker_company) . "</i>";
+        }
+        
+        $output .= '</p>';
         $output .= '</div>';
+        $output .= '</div>'; // Close speaker div
 
-      }
+      } // End foreach speaker
 
+      $output .= '</div>'; // Close speakers-grid
       $output .= '</div>'; // Close role-column
     }
     // If no speakers, do not output the role column or title
-  }
+  } // End foreach role
 
   if ($all_tracks) {
     $output .= '</div>'; // Close roles-grid
@@ -1080,7 +1050,17 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
   }
 
   if ($sessions[$rowID]['trackID'] == "track-all") {
-    $mydiary_button = generate_mydiary_button($session_id);
+    
+    $options = get_option('mira_agenda_settings', []);
+    $use_myagenda = isset($options['use_myagenda']) ? $options['use_myagenda'] : false;
+    
+    if ($use_myagenda) {
+      $mydiary_button = generate_mydiary_button($session_id);
+    }
+    else {
+      $mydiary_button = "";
+    }
+    
     $output = <<<HTML
       <div class="session {$sessions[$rowID]['sessionID']} {$sessions[$rowID]['trackID']}" style="grid-column: {$sessions[$rowID]['gridColumn']}; grid-row: {$sessions[$rowID]['gridRowStartTime']} / {$sessions[$rowID]['gridRowEndTime']}; text-align: left;">
 
@@ -1119,7 +1099,12 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     
     // removed       <span class="session-track">{$sessions[$rowID]['trackString']}</span>
     
-    $mydiary_button = generate_mydiary_button($session_id);
+    if ($use_myagenda) {
+      $mydiary_button = generate_mydiary_button($session_id);
+    }
+    else {
+      $mydiary_button = "";
+    }
 
     $output = <<<HTML
     
