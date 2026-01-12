@@ -6,6 +6,7 @@
  *               Displays a multi-track display for the entire day.
                 
  * Version: 1.34
+
  * Author: Miramedia / Dominic Johnson
  * 
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -69,16 +70,24 @@
     
  * Version 1.32 2025-12-30 - Changed the modal code. Create a shortcode called "mira_modal" 
  
+<<<<<<< HEAD
  * Version 1.33 2026-01-06 - Fixing issue with media grid.
  
  * Version 1.34 2026-01-12 - DEV VERSION  Merged
   
   
+=======
+
+ * Version 1.33 2025-01-05 - Added an option to MyAgenda button 
+ 
+ * Version 1.34 2026-01-06 - Fixing issue with media grid.
+ 
+>>>>>>> 3700d27e3a4af843ac84ca6902acc69a1608c198
  
  */
  
  define('DEVMODE', true); // Set to false on production
- define('VERSION', "1.33"); // Updated version - matches plugin header
+ define('VERSION', "1.34"); // Updated version - matches plugin header
  
  // Add at the very top of your plugin file, right after the opening <?php tag
  add_action('admin_enqueue_scripts', function() {
