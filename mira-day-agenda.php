@@ -86,7 +86,7 @@
  
  */
  
- define('DEVMODE', true); // Set to false on production
+ define('DEVMODE', false); // Set to false on production
  define('VERSION', "1.34"); // Updated version - matches plugin header
  
  // Add at the very top of your plugin file, right after the opening <?php tag
