@@ -692,7 +692,8 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
       if (!empty($tracks) && !is_wp_error($tracks) && $tracks[0]->slug == $alltracks) {
 
         // Find the last non-empty track number
-        $last_track = max(array_keys(array_filter($trackslugs)));
+        $filtered_tracks = array_filter($trackslugs);
+        $last_track = !empty($filtered_tracks) ? max(array_keys($filtered_tracks)) : 8;
         $track_cols = "track-1-start / track-{$last_track}-end";
 
         add_session(
