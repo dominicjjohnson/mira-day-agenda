@@ -253,7 +253,7 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   $output .= "   *************************/\n";
   $output .= "  \n";
 
-  for ($i = 1; $i <= 7; $i++) {
+  for ($i = 1; $i <= 8; $i++) {
     $bg = _safe_val($track_background_colour, "track-$i");
     $txt = _safe_val($track_text_colour, "track-$i");
 
@@ -304,7 +304,7 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   }
 
   $output .= "\n";
-  for ($i = 1; $i <= 7; $i++) {
+  for ($i = 1; $i <= 8; $i++) {
     $txt = _safe_val($track_text_colour, "track-$i");
     if ($txt !== '') {
       $output .= "  .track-{$i}, \n";

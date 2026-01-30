@@ -415,7 +415,8 @@
 .track-4 .roles-grid,
 .track-5 .roles-grid,
 .track-6 .roles-grid,
- .track-7 .roles-grid {
+.track-7 .roles-grid,
+.track-8 .roles-grid {
     display: grid;
     grid-template-columns: column;
     gap: 2em;
