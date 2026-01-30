@@ -253,32 +253,35 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   $output .= "   *************************/\n";
   $output .= "  \n";
 
+  // Scope track styles to this day's schedule
+  $scope = ".schedule_{$day}";
+
   for ($i = 1; $i <= 8; $i++) {
     $bg = _safe_val($track_background_colour, "track-$i");
     $txt = _safe_val($track_text_colour, "track-$i");
 
     if ($bg !== '' || $txt !== '') {
-      $output .= "  .track-{$i} {\n";
+      $output .= "  {$scope} .track-{$i} {\n";
       if ($bg !== ''){
         $output .= "    background-color: {$bg};\n";
         $output .= "    border-color: {$bg};\n";
       }
       if ($txt !== '') $output .= "    color: {$txt} !important;\n";
-      
+
       $output .= "  }\n";
-      
+
       // setup the border colour - same as track: track-n-border
-      $output .= "  .track-{$i}-border {\n";
+      $output .= "  {$scope} .track-{$i}-border {\n";
       if ($bg !== ''){
         $output .= "    border-color: {$bg};\n";
       }
       else {
         $output .= "    border-color: #dedede;\n";
       }
-      $output .= "  }\n";     
-      
+      $output .= "  }\n";
+
       // Setup the track headings
-      $output .= "  .track-{$i}-slot {\n";
+      $output .= "  {$scope} .track-{$i}-slot {\n";
       if ($bg !== ''){
         $output .= "    background-color: {$bg};\n";
       }
@@ -288,16 +291,16 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
 
       if ($txt !== ''){
         $output .= "    color: {$txt};\n";
-      } 
+      }
       else {
         $output .= "    color: #000000;\n";
       }
 
-      $output .= "  }\n";        
-      
-      
+      $output .= "  }\n";
+
+
       // Set the text color in the a. Used to be background too
-      $output .= "  .track-{$i} a {\n";
+      $output .= "  {$scope} .track-{$i} a {\n";
       if ($txt !== '') $output .= "    color: {$txt} !important;\n";
       $output .= "  }\n";
     }
@@ -307,14 +310,14 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   for ($i = 1; $i <= 8; $i++) {
     $txt = _safe_val($track_text_colour, "track-$i");
     if ($txt !== '') {
-      $output .= "  .track-{$i}, \n";
-      $output .= "  .track-{$i} .session-time,\n";
-      $output .= "  .track-{$i} .session-track,\n";
-      $output .= "  .track-{$i} .session-presenter p,\n";
-      $output .= "  .track-{$i} .session-title a {\n";
+      $output .= "  {$scope} .track-{$i}, \n";
+      $output .= "  {$scope} .track-{$i} .session-time,\n";
+      $output .= "  {$scope} .track-{$i} .session-track,\n";
+      $output .= "  {$scope} .track-{$i} .session-presenter p,\n";
+      $output .= "  {$scope} .track-{$i} .session-title a {\n";
       $output .= "    color: {$txt} !important;\n";
       $output .= "  }\n";
-      $output .= "  .track-{$i} .speaker-role-title {\n";
+      $output .= "  {$scope} .track-{$i} .speaker-role-title {\n";
       $output .= "    color: {$txt} !important;\n";
       $output .= "    text-align: left;\n";
       $output .= "    font-size: 1.1em;\n";
@@ -322,12 +325,12 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
       $output .= "    font-weight: bold;\n";
       $output .= "    padding-top: 0.5em;\n";
       $output .= "  }\n";
-      $output .= ".border-track-{$i} {";
-      $output .= "    background-color: white;";
-      $output .= "    border-color: grey;";
-      $output .= "    border-style: solid;";
-      $output .= "  }";
-      
+      $output .= "  {$scope} .border-track-{$i} {\n";
+      $output .= "    background-color: white;\n";
+      $output .= "    border-color: grey;\n";
+      $output .= "    border-style: solid;\n";
+      $output .= "  }\n";
+
       $output .= "\n";
     }
   }
@@ -335,38 +338,38 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   // Track-all
   $bg_all =  $track_background_colour['allcolumns'] ?? '#ffffff'; // white fallback
   $txt_all = $track_text_colour['allcolumns'] ?? '#000000';
-  
+
   if ($bg_all !== '' || $txt_all !== '') {
-    $output .= "  .track-all {\n";
+    $output .= "  {$scope} .track-all {\n";
     $output .= "    display: flex;\n";
     $output .= "    border-color: ".$inputs['default_border_color'].";\n";
-    
+
     // if the border is set to true set the border color. If false then set the bacgrund color.
     if ( (!$inputs['border']) && ($bg_all !== '') ) {
       $output .= "    background: {$bg_all};\n";
     }
     else {
-      $output .= " .bg_color_alltracks { border-color: {$bg_all}; }\n";
+      $output .= "  }\n  {$scope} .bg_color_alltracks { border-color: {$bg_all}; }\n";
     }
-    
+
     if ($txt_all !== '') $output .= "    color: {$txt_all};\n";
     $output .= "    box-shadow: none;\n";
     $output .= "  }\n";
     $output .= "  \n";
-    $output .= "  .track-all .session-time,\n";
-    $output .= "  .track-all .session-track,\n";
-    $output .= "  .track-all .session-presenter,\n";
-    $output .= "  .track-all .session-title a {\n";
+    $output .= "  {$scope} .track-all .session-time,\n";
+    $output .= "  {$scope} .track-all .session-track,\n";
+    $output .= "  {$scope} .track-all .session-presenter,\n";
+    $output .= "  {$scope} .track-all .session-title a {\n";
     if ($txt_all !== '') $output .= "    color: {$txt_all} !important;\n";
     $output .= "  }\n";
-    
-    $output .= "  .track-all .speaker-role-title {\n";
+
+    $output .= "  {$scope} .track-all .speaker-role-title {\n";
     if ($txt_all !== '') $output .= "    color: {$txt_all} !important;\n";
     $output .= "    text-align: left;\n";
     $output .= "    font-size: 1.1em;\n";
     $output .= "    margin-bottom: 0.7em;\n";
     $output .= "  }\n";
-    
+
   }
 
   // Add conditional CSS for when there are more than 4 tracks
