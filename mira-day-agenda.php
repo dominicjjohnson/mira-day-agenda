@@ -70,20 +70,10 @@
     
  * Version 1.32 2025-12-30 - Changed the modal code. Create a shortcode called "mira_modal" 
  
-<<<<<<< HEAD
- * Version 1.33 2026-01-06 - Fixing issue with media grid.
- 
- * Version 1.34 2026-01-12 - DEV VERSION  Merged
-  
-  
-=======
+ * Version 1.33 2026-01-06 - Fixing issue with media grid and added an option to MyAgenda button
 
- * Version 1.33 2025-01-05 - Added an option to MyAgenda button 
- 
- * Version 1.34 2026-01-06 - Fixing issue with media grid.
- 
->>>>>>> 3700d27e3a4af843ac84ca6902acc69a1608c198
- 
+ * Version 1.34 2026-01-12 - DEV VERSION - Merged
+
  */
  
  define('DEVMODE', false); // Set to false on production
@@ -104,14 +94,33 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Error logging for debugging
+if (defined('WP_DEBUG') && WP_DEBUG) {
+    error_log('Mira Day Agenda: Starting plugin load');
+}
+
 // Include the display & data functions file
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/cpt.php';
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/admin.php';
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/wp_bakery_admin_simple.php';
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/display_functions.php';
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/data_functions.php';
-// Register sponsors <-> seminars relationship (editable in sponsor admin)
-require_once plugin_dir_path( __FILE__ ) . 'assets/lib/sponsors_seminars_relationship.php';
+$plugin_files = array(
+    'assets/lib/cpt.php',
+    'assets/lib/admin.php',
+    'assets/lib/wp_bakery_admin_simple.php',
+    'assets/lib/display_functions.php',
+    'assets/lib/data_functions.php',
+    'assets/lib/sponsors_seminars_relationship.php'
+);
+
+foreach ($plugin_files as $file) {
+    $file_path = plugin_dir_path( __FILE__ ) . $file;
+    if (file_exists($file_path)) {
+        require_once $file_path;
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Mira Day Agenda: Loaded ' . $file);
+        }
+    } else {
+        error_log('Mira Day Agenda: MISSING FILE - ' . $file_path);
+        wp_die('Mira Day Agenda: Required file missing - ' . $file);
+    }
+}
 
 // Clear WP Bakery cache on plugin update
 add_action('admin_init', function() {
