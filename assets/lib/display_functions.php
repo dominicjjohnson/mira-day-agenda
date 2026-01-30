@@ -229,14 +229,20 @@ function get_css_slots ($time_slots, $track_background_colour, $track_text_colou
   
   $number_of_tracks = $inputs['number_of_tracks'];
   // Dynamically generate grid columns based on $number_of_tracks
-  for ($i = 1; $i <= $number_of_tracks; $i++) {
-    if ($i === 1) {
-      $output .= "        [track-1-start] 1fr\n";
-    } else {
-      $output .= "        [track-" . ($i - 1) . "-end track-{$i}-start] 1fr\n";
+  // If no tracks defined but all-tracks exists, create 1 column for it
+  if ($number_of_tracks == 0) {
+    $output .= "        [track-1-start] 1fr\n";
+    $output .= "        [track-1-end];\n";
+  } else {
+    for ($i = 1; $i <= $number_of_tracks; $i++) {
+      if ($i === 1) {
+        $output .= "        [track-1-start] 1fr\n";
+      } else {
+        $output .= "        [track-" . ($i - 1) . "-end track-{$i}-start] 1fr\n";
+      }
     }
+    $output .= "        [track-{$number_of_tracks}-end];\n";
   }
-  $output .= "        [track-{$number_of_tracks}-end];\n";
 
   $output .= "    }\n";
   $output .= "  }\n";
@@ -691,9 +697,9 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
 
       if (!empty($tracks) && !is_wp_error($tracks) && $tracks[0]->slug == $alltracks) {
 
-        // Find the last non-empty track number
+        // Find the last non-empty track number, default to 1 if no tracks defined
         $filtered_tracks = array_filter($trackslugs);
-        $last_track = !empty($filtered_tracks) ? max(array_keys($filtered_tracks)) : 8;
+        $last_track = !empty($filtered_tracks) ? max(array_keys($filtered_tracks)) : 1;
         $track_cols = "track-1-start / track-{$last_track}-end";
 
         add_session(
