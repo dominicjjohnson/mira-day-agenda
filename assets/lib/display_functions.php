@@ -691,7 +691,9 @@ function get_grid_session_data($data, $trackslugs, $alltracks) {
 
       if (!empty($tracks) && !is_wp_error($tracks) && $tracks[0]->slug == $alltracks) {
 
-        $track_cols = "track-1-start / track-6-end";
+        // Find the last non-empty track number
+        $last_track = max(array_keys(array_filter($trackslugs)));
+        $track_cols = "track-1-start / track-{$last_track}-end";
 
         add_session(
           $sessions,
@@ -888,7 +890,7 @@ function get_speaker_block_html ($postid, $track, $all_tracks) {
         }
         else {
             // Placeholder space when no image exists
-            $output .= '<div style="width:50px;height:50px;flex-shrink:0;"></div>';
+            $output .= '<div class="speaker-no-photo" style="width:50px;height:50px;flex-shrink:0;"></div>';
         }
         
         $output .= '<div style="display: flex; flex-direction: column; justify-content: flex-start;">';
@@ -1049,10 +1051,10 @@ function display_one_session ($sessions, $rowID,$inputs,$headings, $display_head
     $session_time = $time_split['start_time'];
   }
 
+  $options = get_option('mira_agenda_settings', []);
+  $use_myagenda = isset($options['use_myagenda']) ? $options['use_myagenda'] : false;
+
   if ($sessions[$rowID]['trackID'] == "track-all") {
-    
-    $options = get_option('mira_agenda_settings', []);
-    $use_myagenda = isset($options['use_myagenda']) ? $options['use_myagenda'] : false;
     
     if ($use_myagenda) {
       $mydiary_button = generate_mydiary_button($session_id);

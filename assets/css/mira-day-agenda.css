@@ -6,6 +6,9 @@
 		.schedule {
 			display: grid;
 			grid-gap: 0.25em;
+			width: 100%;
+			max-width: 100%;
+			box-sizing: border-box;
 			grid-template-rows:
 				[tracks] auto
 				[time-0800] 1fr
@@ -42,12 +45,12 @@
 	.title_time_display {
 		align-items: center;
 		justify-content: space-between;
-		padding: 0.75em 1.25em;
+		padding: 0.4em 0.6em;
 		background-color: #f5f5f5;
 		border-left: 4px solid;
 		border-radius: 4px;
-		margin-bottom: 1em;
-		font-size: 1rem;
+		margin-bottom: 0.5em;
+		font-size: 0.85rem;
 		color: #222;
 	}
 
@@ -58,17 +61,16 @@
     .title_time_display_cols {
     display: grid;
     grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 10px;
     align-items: start;
+    gap: 6px;
   }
   
   .title_time_display .time {
     flex-shrink: 0;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
     color: #666;
-    margin-right: 1em;
+    margin-right: 0.5em;
     white-space: nowrap;
   }
   
@@ -80,11 +82,9 @@
   .title_time_display .title {
     flex-grow: 1;
     font-weight: 600;
-    font-size: 1.05rem;
+    font-size: 0.9rem;
     color: #111;
-    /* overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap; */
+    word-break: break-word;
   }
   .title_time_display .title a,
   .title_time_display .title a:hover {
@@ -125,8 +125,10 @@
 @supports( display:grid ) {
   @media screen and (min-width: 700px) {
     .session {
-    margin: 0;
-    } 
+      margin: 0;
+      min-width: 0;
+      overflow: hidden;
+    }
   }
 }
 
@@ -189,6 +191,32 @@
     height: 60px;
     border-radius: 50%;
     margin-right: 10px;
+}
+
+/* Stack speaker photo above name in narrow columns */
+.session .speaker {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+    gap: 0.4em !important;
+    padding: 0.3em !important;
+}
+
+.session .speaker img {
+    margin-right: 0;
+    width: 50px;
+    height: 50px;
+}
+
+.session .speaker p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+/* Hide blank photo placeholder in stacked layout */
+.session .speaker .speaker-no-photo {
+    display: none !important;
 }
 
   .session {

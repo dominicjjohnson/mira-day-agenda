@@ -67,31 +67,35 @@ add_action('save_post_seminars', function($post_id) {
 });
 
 // Helper: Get seminars for a sponsor
-function mira_get_sponsor_seminars( $sponsor_id ) {
-    if ( ! function_exists( 'p2p_get_connected' ) ) return array();
-    $connected = p2p_get_connected( 'sponsors_to_seminars', $sponsor_id );
-    $seminars = array();
-    if ( $connected->have_posts() ) {
-        while ( $connected->have_posts() ) {
-            $connected->the_post();
-            $seminars[] = get_post();
+if ( ! function_exists( 'mira_get_sponsor_seminars' ) ) {
+    function mira_get_sponsor_seminars( $sponsor_id ) {
+        if ( ! function_exists( 'p2p_get_connected' ) ) return array();
+        $connected = p2p_get_connected( 'sponsors_to_seminars', $sponsor_id );
+        $seminars = array();
+        if ( $connected->have_posts() ) {
+            while ( $connected->have_posts() ) {
+                $connected->the_post();
+                $seminars[] = get_post();
+            }
+            wp_reset_postdata();
         }
-        wp_reset_postdata();
+        return $seminars;
     }
-    return $seminars;
 }
 
 // Helper: Get sponsors for a seminar
-function mira_get_seminar_sponsors( $seminar_id ) {
-    if ( ! function_exists( 'p2p_get_connected' ) ) return array();
-    $connected = p2p_get_connected( 'sponsors_to_seminars', $seminar_id );
-    $sponsors = array();
-    if ( $connected->have_posts() ) {
-        while ( $connected->have_posts() ) {
-            $connected->the_post();
-            $sponsors[] = get_post();
+if ( ! function_exists( 'mira_get_seminar_sponsors' ) ) {
+    function mira_get_seminar_sponsors( $seminar_id ) {
+        if ( ! function_exists( 'p2p_get_connected' ) ) return array();
+        $connected = p2p_get_connected( 'sponsors_to_seminars', $seminar_id );
+        $sponsors = array();
+        if ( $connected->have_posts() ) {
+            while ( $connected->have_posts() ) {
+                $connected->the_post();
+                $sponsors[] = get_post();
+            }
+            wp_reset_postdata();
         }
-        wp_reset_postdata();
+        return $sponsors;
     }
-    return $sponsors;
 }
