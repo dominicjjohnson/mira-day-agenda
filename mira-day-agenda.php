@@ -5,7 +5,7 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.34
+ * Version: 1.36
 
  * Author: Miramedia / Dominic Johnson
  * 
@@ -73,11 +73,24 @@
  * Version 1.33 2026-01-06 - Fixing issue with media grid and added an option to MyAgenda button
 
  * Version 1.34 2026-01-12 - DEV VERSION - Merged
+ * 
+ * Version 1.35. 2026-01-30. Fixed issues with 8 tracks - mainly css.
+ *
+ * Version 1.36. 2026-01-30. Responsive improvements for multi-column layouts
+ *    1. Fixed grid overflow - schedule now stays within screen width
+ *    2. Dynamic all-tracks span based on actual track count
+ *    3. Fixed undefined $use_myagenda variable warning
+ *    4. Reduced padding and font sizes for narrow columns
+ *    5. Stack speaker photo above name in session columns
+ *    6. Hide blank speaker photo placeholder in stacked layout
+ *    7. Stack multiple speakers vertically in narrow columns
+ *    8. Smaller event-details headings to match title size
+ *    9. Handle all-tracks-only shortcode with no individual tracks
 
  */
- 
- define('DEVMODE', false); // Set to false on production
- define('VERSION', "1.34"); // Updated version - matches plugin header
+
+ define('DEVMODE', true); // Set to false on production
+ define('VERSION', "1.36"); // Updated version - matches plugin header
  
  // Add at the very top of your plugin file, right after the opening <?php tag
  add_action('admin_enqueue_scripts', function() {
