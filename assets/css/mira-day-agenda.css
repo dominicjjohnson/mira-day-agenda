@@ -202,8 +202,8 @@
 /* Stack speaker photo above name in narrow columns */
 .session .speaker {
     flex-direction: column !important;
-    align-items: center !important;
-    text-align: center;
+    align-items: flex-start !important;
+    text-align: left;
     gap: 0.4em !important;
     padding: 0.3em !important;
 }
