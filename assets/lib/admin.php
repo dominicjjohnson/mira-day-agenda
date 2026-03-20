@@ -1,76 +1,114 @@
 <?php
-// Add submenu page under Seminars menu
-add_action('admin_menu', function() {
-    add_submenu_page(
-        'edit.php?post_type=seminars', // Parent slug for Seminars CPT
-        'Day Agenda Settings',         // Page title
-        'Day Agenda Settings',         // Menu title
-        'manage_options',              // Capability
-        'day-agenda-settings',         // Menu slug
-        'mira_agenda_settings_page'    // Callback function
-    );
-});
+/**
+ * MyAgenda Admin - top-level menu and settings.
+ */
 
-// Settings page callback
-function mira_agenda_settings_page() {
-    // Handle form submission
-    if (isset($_POST['mira_agenda_get_char_limit_value']) || isset($_POST['mira_agenda_use_myagenda'])) {
-        // Get existing options or initialize
-        $options = get_option('mira_agenda_settings', []);
-        
-        // Save character limit
-        if (isset($_POST['mira_agenda_get_char_limit_value'])) {
-            $options['more_button_char_limit'] = intval($_POST['mira_agenda_get_char_limit_value']);
-        }
-        
-        // Save Use MyAgenda setting
-        if (isset($_POST['mira_agenda_use_myagenda'])) {
-            $options['use_myagenda'] = ($_POST['mira_agenda_use_myagenda'] === 'true');
-        }
-        
-        update_option('mira_agenda_settings', $options);
-        echo '<div class="updated"><p>Settings saved.</p></div>';
-    }
-    
-    // Get current settings
-    $options = get_option('mira_agenda_settings', []);
-    $current_value = isset($options['more_button_char_limit']) ? (int)$options['more_button_char_limit'] : 200;
-    $use_myagenda = isset($options['use_myagenda']) ? $options['use_myagenda'] : false;
-    ?>
-    <div class="wrap">
-        <h1>Day Agenda Settings</h1>
-        <form method="post">
-            <table class="form-table">
-                <tr>
-                    <th scope="row">
-                        <label for="mira_agenda_get_char_limit_value">Character Limit for Session Content:</label>
-                    </th>
-                    <td>
-                        <input type="number" id="mira_agenda_get_char_limit_value" name="mira_agenda_get_char_limit_value" value="<?php echo esc_attr($current_value); ?>" min="1" />
-                        <p class="description">Set the maximum character length for session content before truncation.</p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">Use MyAgenda:</th>
-                    <td>
-                        <fieldset>
-                            <label>
-                                <input type="radio" name="mira_agenda_use_myagenda" value="true" <?php checked($use_myagenda, true); ?> />
-                                Yes
-                            </label>
-                            <br>
-                            <label>
-                                <input type="radio" name="mira_agenda_use_myagenda" value="false" <?php checked($use_myagenda, false); ?> />
-                                No
-                            </label>
-                        </fieldset>
-                    </td>
-                </tr>
-            </table>
-            <p class="submit">
-                <input type="submit" class="button button-primary" value="Save Changes" />
-            </p>
-        </form>
-    </div>
-    <?php
+// ---------------------------------------------------------------
+// Top-level admin menu: MyAgenda
+// ---------------------------------------------------------------
+add_action( 'admin_menu', 'mira_myagenda_register_menu' );
+function mira_myagenda_register_menu() {
+	add_menu_page(
+		'MyAgenda Settings',          // Page title
+		'MyAgenda',                   // Menu label
+		'manage_options',             // Capability
+		'mira-myagenda',              // Slug
+		'mira_myagenda_settings_page', // Callback
+		'dashicons-calendar-alt',     // Icon
+		58                            // Position (below Appearance)
+	);
+}
+
+// ---------------------------------------------------------------
+// Settings page
+// ---------------------------------------------------------------
+function mira_myagenda_settings_page() {
+
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	// Handle form submission
+	if ( isset( $_POST['_mira_myagenda_nonce'] ) && wp_verify_nonce( $_POST['_mira_myagenda_nonce'], 'mira_myagenda_save' ) ) {
+		$options = get_option( 'mira_agenda_settings', array() );
+
+		$options['more_button_char_limit']  = isset( $_POST['more_button_char_limit'] ) ? absint( $_POST['more_button_char_limit'] ) : 200;
+		$options['enable_my_diary']         = isset( $_POST['enable_my_diary'] ) ? 'yes' : 'no';
+		$options['show_on_exhibitor_list']  = isset( $_POST['show_on_exhibitor_list'] ) ? true : false;
+
+		update_option( 'mira_agenda_settings', $options );
+		echo '<div class="notice notice-success is-dismissible"><p>Settings saved.</p></div>';
+	}
+
+	$options = get_option( 'mira_agenda_settings', array() );
+	$char_limit           = isset( $options['more_button_char_limit'] ) ? (int) $options['more_button_char_limit'] : 200;
+	$enable_my_diary      = isset( $options['enable_my_diary'] ) ? $options['enable_my_diary'] : 'yes';
+	$show_on_exhibitor    = ! empty( $options['show_on_exhibitor_list'] );
+	?>
+	<div class="wrap">
+		<h1>MyAgenda Settings</h1>
+
+		<form method="post">
+			<?php wp_nonce_field( 'mira_myagenda_save', '_mira_myagenda_nonce' ); ?>
+
+			<h2 class="title">Agenda Grid</h2>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="more_button_char_limit">Session content character limit</label></th>
+					<td>
+						<input type="number" id="more_button_char_limit" name="more_button_char_limit"
+							value="<?php echo esc_attr( $char_limit ); ?>" min="50" max="2000" step="10" class="small-text" />
+						<p class="description">Characters shown before a "More" button appears. Default: 200.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">My Diary feature</th>
+					<td>
+						<label>
+							<input type="checkbox" name="enable_my_diary" value="yes" <?php checked( $enable_my_diary, 'yes' ); ?> />
+							Enable "Add to My Diary" buttons on session cards
+						</label>
+					</td>
+				</tr>
+			</table>
+
+			<h2 class="title">Exhibitor List Integration</h2>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row">Show on Exhibitor List</th>
+					<td>
+						<label>
+							<input type="checkbox" name="show_on_exhibitor_list" value="1" <?php checked( $show_on_exhibitor ); ?> />
+							Add a small <strong>My Itinerary</strong> button next to each exhibitor name in the list
+						</label>
+						<p class="description">Default: off. Requires the cw-plugin-exhibitors plugin.</p>
+					</td>
+				</tr>
+			</table>
+
+			<?php submit_button( 'Save Settings' ); ?>
+		</form>
+
+		<hr>
+		<h2>Shortcode Reference</h2>
+		<table class="widefat striped" style="max-width:700px">
+			<thead><tr><th>Shortcode</th><th>Description</th></tr></thead>
+			<tbody>
+				<tr><td><code>[agenda-grid day="YYYY-MM-DD"]</code></td><td>Displays the day agenda grid</td></tr>
+				<tr><td><code>[display-my-diary]</code></td><td>Displays the visitor's saved diary</td></tr>
+				<tr><td><code>[mira_modal]</code></td><td>Modal popup container</td></tr>
+				<tr><td><code>[debug-my-diary]</code></td><td>Developer debug panel</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<?php
+}
+
+// ---------------------------------------------------------------
+// Filter: let miramedia-my-agenda control the exhibitor list button
+// ---------------------------------------------------------------
+add_filter( 'mira_show_on_exhibitor_list', 'mira_myagenda_show_on_exhibitor_list' );
+function mira_myagenda_show_on_exhibitor_list( $default ) {
+	$options = get_option( 'mira_agenda_settings', array() );
+	return ! empty( $options['show_on_exhibitor_list'] );
 }

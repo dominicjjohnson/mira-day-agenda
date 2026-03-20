@@ -161,165 +161,7 @@ add_action('admin_init', function() {
     }
 });
 
-// Add settings page
-add_action('admin_menu', 'mira_agenda_add_admin_menu');
-add_action('admin_init', 'mira_agenda_settings_init');
-
-function mira_agenda_add_admin_menu() {
-    add_options_page(
-        'Mira Day Agenda Settings',
-        'Day Agenda',
-        'manage_options',
-        'mira_day_agenda',
-        'mira_agenda_options_page'
-    );
-}
-
-function mira_agenda_settings_init() {
-    register_setting('mira_agenda_settings', 'mira_agenda_settings');
-
-    add_settings_section(
-        'mira_agenda_settings_section',
-        __('Display Settings', 'mira-day-agenda'),
-        'mira_agenda_settings_section_callback',
-        'mira_agenda_settings'
-    );
-
-    add_settings_field(
-        'more_button_char_limit',
-        __('More Button Character Limit', 'mira-day-agenda'),
-        'mira_agenda_more_button_char_limit_render',
-        'mira_agenda_settings',
-        'mira_agenda_settings_section'
-    );
-
-    add_settings_field(
-        'enable_my_diary',
-        __('Enable My Diary Feature', 'mira-day-agenda'),
-        'mira_agenda_enable_my_diary_render',
-        'mira_agenda_settings',
-        'mira_agenda_settings_section'
-    );
-}
-
-function mira_agenda_more_button_char_limit_render() {
-    $options = get_option('mira_agenda_settings');
-    $value = isset($options['more_button_char_limit']) ? $options['more_button_char_limit'] : 200;
-    ?>
-    <input type='number' name='mira_agenda_settings[more_button_char_limit]' value='<?php echo esc_attr($value); ?>' min='50' max='1000' step='10'>
-    <p class="description">Number of characters to display before showing the "More" button. Default: 200</p>
-    <?php
-}
-
-function mira_agenda_enable_my_diary_render() {
-    $options = get_option('mira_agenda_settings');
-    $value = isset($options['enable_my_diary']) ? $options['enable_my_diary'] : 'yes';
-    ?>
-    <select name='mira_agenda_settings[enable_my_diary]'>
-        <option value='yes' <?php selected($value, 'yes'); ?>>Enable (Show "Add to My Diary" buttons)</option>
-        <option value='no' <?php selected($value, 'no'); ?>>Disable (Hide My Diary buttons)</option>
-    </select>
-    <p class="description">Control whether the "Add to My Diary" buttons appear on sessions. Default: Enable</p>
-    <?php
-}
-
-function mira_agenda_settings_section_callback() {
-    echo __('Configure how the agenda grid displays content.', 'mira-day-agenda');
-}
-
-function mira_agenda_options_page() {
-    ?>
-    <div class="wrap">
-        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
-        <form action='options.php' method='post'>
-            <?php
-            settings_fields('mira_agenda_settings');
-            do_settings_sections('mira_agenda_settings');
-            submit_button();
-            ?>
-        </form>
-        
-        <div style="margin-top: 30px; padding: 15px; background: #f9f9f9; border-left: 4px solid #0073aa;">
-            <h3>Plugin Information</h3>
-            <p><strong>Version:</strong> <?php echo VERSION; ?></p>
-            <p><strong>Development Mode:</strong> <?php echo DEVMODE ? 'Enabled' : 'Disabled'; ?></p>
-            <p><strong>Basic Shortcode:</strong> <code>[agenda-grid day="2025-10-01"]</code></p>
-            <p><strong>WP Bakery Element:</strong> Available in Visual Composer as "Agenda Grid"</p>
-            
-            <h4>All Available Shortcode Parameters:</h4>
-            <div style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px;">
-                <p><strong>Basic Usage:</strong></p>
-                <code>[agenda-grid day="2025-10-01"]</code>
-                
-                <p style="margin-top: 15px;"><strong>All Parameters:</strong></p>
-                <pre style="background: #f0f0f0; padding: 10px; border-radius: 3px; font-size: 12px; line-height: 1.4;">[agenda-grid 
-    day="2025-10-01"                    <!-- Conference date (required) -->
-    all-tracks="allcolumns"             <!-- Show all tracks or specific track -->
-    track1=""                           <!-- Specific track for column 1 -->
-    track2=""                           <!-- Specific track for column 2 -->
-    track3=""                           <!-- Specific track for column 3 -->
-    track4=""                           <!-- Specific track for column 4 -->
-    track5=""                           <!-- Specific track for column 5 -->
-    track6=""                           <!-- Specific track for column 6 -->
-    track7=""                           <!-- Specific track for column 7 -->
-    track8=""                           <!-- Specific track for column 8 -->
-    border="yes"                        <!-- Show border: yes/no -->
-    display_heading_bar="yes"           <!-- Show heading bar: yes/no -->
-    show_end_time="false"               <!-- Show end times: true/false -->
-    time_slot_side="true"               <!-- Time slots on side: true/false -->
-    display_seminar_type="no"           <!-- Show session types: yes/no -->
-    display_seminar_duration="no"       <!-- Show session duration: yes/no -->
-]</pre>
-                
-                <p style="margin-top: 15px;"><strong>Parameter Details:</strong></p>
-                <ul style="margin-left: 20px;">
-                    <li><strong>day:</strong> Date slug from taxonomy (e.g., "2025-10-01")</li>
-                    <li><strong>all-tracks:</strong> Use "allcolumns" to show all tracks</li>
-                    <li><strong>track1-8:</strong> Specific track slugs for individual columns</li>
-                    <li><strong>border:</strong> "yes" or "no" - adds border around grid</li>
-                    <li><strong>display_heading_bar:</strong> "yes" or "no" - shows track headers</li>
-                    <li><strong>show_end_time:</strong> "true" or "false" - displays session end times</li>
-                    <li><strong>time_slot_side:</strong> "true" or "false" - positions time slots</li>
-                    <li><strong>display_seminar_type:</strong> "yes" or "no" - shows session types</li>
-                    <li><strong>display_seminar_duration:</strong> "yes" or "no" - shows duration</li>
-                </ul>
-                
-                <p style="margin-top: 15px;"><strong>Example with Multiple Parameters:</strong></p>
-                <code>[agenda-grid day="2025-10-01" border="no" show_end_time="true" display_seminar_type="yes"]</code>
-            </div>
-        </div>
-
-        <!-- My Diary Shortcodes Section -->
-        <div style="background: #f0f8ff; border: 1px solid #0073aa; border-radius: 5px; padding: 15px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #0073aa;">📋 My Diary Shortcodes</h3>
-            <div style="background: white; padding: 15px; border-radius: 3px;">
-                <p><strong>Display My Diary:</strong></p>
-                <pre style="background: #f9f9f9; padding: 10px; border-radius: 3px; font-family: monospace;">[display-my-diary 
-    style="grid"                        <!-- Display style: grid/list -->
-    show_empty_message="yes"            <!-- Show message when empty: yes/no -->
-    empty_message=""                    <!-- Custom empty message -->
-    show_details="yes"                  <!-- Show session details: yes/no -->
-    show_remove_buttons="yes"           <!-- Show remove buttons: yes/no -->
-]</pre>
-                
-                <p style="margin-top: 15px;"><strong>My Diary Debug (for developers):</strong></p>
-                <pre style="background: #f9f9f9; padding: 10px; border-radius: 3px; font-family: monospace;">[debug-my-diary]</pre>
-                
-                <p style="margin-top: 15px;"><strong>Parameter Details:</strong></p>
-                <ul style="margin-left: 20px;">
-                    <li><strong>style:</strong> "grid" or "list" - how diary items are displayed</li>
-                    <li><strong>show_empty_message:</strong> "yes" or "no" - shows message when diary is empty</li>
-                    <li><strong>empty_message:</strong> Custom text for empty diary (optional)</li>
-                    <li><strong>show_details:</strong> "yes" or "no" - shows session descriptions</li>
-                    <li><strong>show_remove_buttons:</strong> "yes" or "no" - allows removing items</li>
-                </ul>
-                
-                <p style="margin-top: 15px;"><strong>Note:</strong> My Diary functionality can be enabled/disabled in the settings above. When disabled, the diary shortcodes will show a disabled message instead of the diary interface.</p>
-            </div>
-        </div>
-    </div>
-    <?php
-}
+// Admin menu and settings are handled in assets/lib/admin.php
 
 // Helper function to get the character limit setting
 function mira_agenda_get_char_limit() {
@@ -1140,6 +982,18 @@ function mira_agenda_grid_old_enqueue_assets() {
     wp_add_inline_script('mira-mydiary-script', 'console.log("MyDiary JS loaded successfully"); console.log("AJAX URL:", mira_diary_ajax.ajaxurl);');
   }
   
+  // Exhibitor list itinerary button JS (only when setting is enabled)
+  $options = get_option( 'mira_agenda_settings', array() );
+  if ( ! empty( $options['show_on_exhibitor_list'] ) ) {
+      wp_enqueue_script(
+          'mira-myagenda-exhibitor',
+          plugin_dir_url( __FILE__ ) . 'assets/js/myagenda-exhibitor.js',
+          array(),
+          DEVMODE ? time() : VERSION,
+          true
+      );
+  }
+
   // Enqueue unload policy fix for frontend only
   wp_enqueue_script(
       'mira-unload-policy-fix',

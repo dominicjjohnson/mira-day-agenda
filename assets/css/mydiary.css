@@ -2,6 +2,36 @@
  * MyDiary Button Styles for Mira Day Agenda
  */
 
+/* ---------------------------------------------------------------
+   My Itinerary button — exhibitor list
+   --------------------------------------------------------------- */
+span.myagenda {
+	display: inline-block;
+	margin-left: 8px;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1.6;
+	color: #fff;
+	background: #e67e22;
+	border-radius: 3px;
+	cursor: pointer;
+	vertical-align: middle;
+	transition: background 0.2s ease, opacity 0.2s ease;
+	user-select: none;
+	white-space: nowrap;
+}
+span.myagenda:hover {
+	background: #cf6d17;
+}
+span.myagenda.in-itinerary {
+	background: #999;
+	color: #eee;
+}
+span.myagenda.in-itinerary:hover {
+	background: #c0392b;
+}
+
 /* MyDiary Display Header */
 .my-diary-header {
     display: flex;
