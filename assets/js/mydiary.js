@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setCookie('AddToDiary', JSON.stringify(items), 30); // 30 days expiry
     }
 
+
     // Add seminar to diary
     function addToDiary(seminarId) {
         let diaryItems = getDiaryItems();
@@ -290,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize tab focus detection
     addTabFocusDetection();
 
-    // Global function to populate diary display
+    // Global function to populate diary display (sessions only — exhibitors rendered server-side)
     window.populateMyDiary = function(options) {
         const defaultOptions = {
             style: 'grid',
@@ -298,59 +299,36 @@ document.addEventListener('DOMContentLoaded', function() {
             showRemoveButtons: true,
             showEmptyMessage: true
         };
-        
+
         const config = Object.assign({}, defaultOptions, options);
         const diaryItems = getDiaryItems();
-        const container = document.querySelector('.my-diary-content');
-        const emptyDiv = document.querySelector('.my-diary-empty');
-        
-        if (!container) {
-            return;
-        }
+        const container  = document.querySelector('.my-diary-content');
+        const emptyDiv   = document.querySelector('.my-diary-empty');
+
+        if (!container) return;
 
         if (diaryItems.length === 0) {
-            // Show empty message, hide content
             container.style.display = 'none';
             container.innerHTML = '';
-            
             if (emptyDiv && config.showEmptyMessage) {
                 emptyDiv.style.display = 'block';
-            } else if (config.showEmptyMessage) {
-                // Create empty message if it doesn't exist
-                const emptyHtml = '<div class="my-diary-empty"><p class="empty-message">Your diary is empty. Add sessions from the agenda to see them here.</p></div>';
-                container.innerHTML = emptyHtml;
-                container.style.display = 'block';
             }
             return;
         }
 
-        // Hide empty message, show content
-        if (emptyDiv) {
-            emptyDiv.style.display = 'none';
-        }
+        if (emptyDiv) emptyDiv.style.display = 'none';
         container.style.display = 'block';
-
-        // Show loading state
         container.innerHTML = '<div class="my-diary-loading">Loading your diary sessions...</div>';
 
-        // Check if we have WordPress AJAX available
         const ajaxUrl = getAjaxUrl();
-        
         if (ajaxUrl) {
-            // Fetch session data for each diary item
             fetchSessionsData(diaryItems, ajaxUrl)
-                .then(sessions => {
-                    renderDiarySessions(sessions, container, config);
-                })
+                .then(sessions => { renderDiarySessions(sessions, container, config); })
                 .catch(error => {
                     console.error('Error loading diary sessions:', error);
-                    // Fallback to mock data or simple display
-                    console.log('Falling back to simple display');
                     renderSimpleDiarySessions(diaryItems, container, config);
                 });
         } else {
-            // Fallback when WordPress AJAX is not available
-            console.warn('WordPress AJAX not available, using fallback display');
             renderSimpleDiarySessions(diaryItems, container, config);
         }
     };
@@ -665,12 +643,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function stripHtmlTags(str) {
         if (!str) return '';
         return str.replace(/<[^>]*>/g, '');
-    }
-
-    // Truncate text to specified length
-    function truncateText(text, maxLength) {
-        if (!text || text.length <= maxLength) return text;
-        return text.substring(0, maxLength) + '...';
     }
 
     // Attach event listeners to remove buttons

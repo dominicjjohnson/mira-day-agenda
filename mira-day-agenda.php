@@ -387,13 +387,17 @@ function display_my_diary_shortcode($atts) {
     // Start output buffering
     ob_start();
 
+    // Use admin setting as default for style (can still be overridden by shortcode attribute)
+    $admin_options   = get_option( 'mira_agenda_settings', array() );
+    $admin_style     = isset( $admin_options['diary_display_style'] ) ? $admin_options['diary_display_style'] : 'grid';
+
     // Set default values for parameters
     $atts = shortcode_atts(array(
-        'style' => 'grid',
+        'style'              => $admin_style,
         'show_empty_message' => 'yes',
-        'empty_message' => '',
-        'show_details' => 'yes', // Always default to showing details
-        'show_remove_buttons' => 'yes',
+        'empty_message'      => '',
+        'show_details'       => 'yes',
+        'show_remove_buttons'=> 'yes',
     ), $atts, 'display-my-diary');
 
     // Convert string values to booleans
@@ -403,33 +407,105 @@ function display_my_diary_shortcode($atts) {
     $style = esc_attr($atts['style']);
     $empty_message = !empty($atts['empty_message']) ? esc_html($atts['empty_message']) : 'Your diary is empty. Add sessions from the agenda to see them here.';
 
+    // Read ExhibitorItinerary cookie server-side
+    $exhibitor_ids = array();
+    if ( ! empty( $_COOKIE['ExhibitorItinerary'] ) ) {
+        $raw     = sanitize_text_field( wp_unslash( $_COOKIE['ExhibitorItinerary'] ) );
+        $decoded = json_decode( $raw, true );
+        if ( is_array( $decoded ) ) {
+            $exhibitor_ids = array_values( array_filter( array_map( 'absint', $decoded ) ) );
+        }
+    }
+
+    $exhibitors = array();
+    if ( ! empty( $exhibitor_ids ) ) {
+        $exhibitors = get_posts( array(
+            'post_type'      => 'exhibitors',
+            'post__in'       => $exhibitor_ids,
+            'orderby'        => 'title',
+            'order'          => 'ASC',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+        ) );
+    }
+
+    $has_sessions   = ! empty( $_COOKIE['AddToDiary'] ) && $_COOKIE['AddToDiary'] !== '[]';
+    $has_exhibitors = ! empty( $exhibitors );
+
     // Generate the diary display HTML
     echo '<div class="my-diary-container my-diary-' . $style . '">';
-    
-    // Add refresh button header
+
+    // Header
     echo '<div class="my-diary-header">';
     echo '<h3 class="my-diary-title">My Personal Agenda</h3>';
-    echo '<button class="my-diary-refresh-btn" title="Refresh diary" onclick="refreshMyDiary();">';
-    echo '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
-    echo '<path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.64A9 9 0 0 1 3.51 15"/>';
-    echo '</svg>';
-    echo '</button>';
-    echo '</div>';
-    
-    echo '<div id="my-diary-sessions">';
-    
-    // Empty message div - always include if show_empty_message is true
-    if ($show_empty_message) {
-        echo '<div class="my-diary-empty" style="display: block;">';
-        echo '<p class="empty-message">' . $empty_message . '</p>';
-        echo '</div>';
+    if ( $has_sessions ) {
+        echo '<button class="my-diary-refresh-btn" title="Refresh sessions" onclick="refreshMyDiary();">';
+        echo '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
+        echo '<path d="M23 4v6h-6M1 20v-6h6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.64A9 9 0 0 1 3.51 15"/>';
+        echo '</svg>';
+        echo '</button>';
     }
-    
-    echo '<div class="my-diary-content" style="display: none;"></div>';
-    echo '</div>';
     echo '</div>';
 
-    // Add JavaScript to populate the diary
+    // Empty state
+    if ( ! $has_sessions && ! $has_exhibitors ) {
+        if ( $show_empty_message ) {
+            echo '<div class="my-diary-empty"><p class="empty-message">' . esc_html( $empty_message ) . '</p></div>';
+        }
+        echo '</div>'; // close .my-diary-container
+    } else {
+
+        // Sessions section (JS-populated via AJAX)
+        if ( $has_sessions ) {
+            echo '<div id="my-diary-sessions">';
+            if ( $has_exhibitors ) {
+                echo '<h3 class="diary-section-heading">My Sessions</h3>';
+            }
+            if ( $show_empty_message ) {
+                echo '<div class="my-diary-empty" style="display:none;"><p class="empty-message">' . esc_html( $empty_message ) . '</p></div>';
+            }
+            echo '<div class="my-diary-content" style="display:none;"></div>';
+            echo '</div>';
+        }
+
+        // Exhibitors section (server-side rendered)
+        if ( $has_exhibitors ) {
+            echo '<div class="my-diary-exhibitors">';
+            if ( $has_sessions ) {
+                echo '<h3 class="diary-section-heading">My Exhibitors</h3>';
+            }
+            echo '<div class="diary-day-sessions">';
+            foreach ( $exhibitors as $exhibitor ) {
+                $permalink = get_permalink( $exhibitor->ID );
+                $stand     = get_post_meta( $exhibitor->ID, 'stand_number', true );
+                $website   = get_post_meta( $exhibitor->ID, 'website_url', true );
+                $logo      = has_post_thumbnail( $exhibitor->ID )
+                    ? ( get_the_post_thumbnail_url( $exhibitor->ID, 'sponsor_detail_photo' ) ?: get_the_post_thumbnail_url( $exhibitor->ID, 'medium' ) )
+                    : '';
+
+                echo '<div class="diary-session diary-exhibitor" data-exhibitor-id="' . esc_attr( $exhibitor->ID ) . '">';
+                echo '<div class="diary-session-header">';
+                echo '<div><span class="diary-session-track">Exhibitor</span></div>';
+                if ( $show_remove_buttons ) {
+                    echo '<button class="diary-remove-exhibitor-btn" data-exhibitor-id="' . esc_attr( $exhibitor->ID ) . '">Remove</button>';
+                }
+                echo '</div>';
+                if ( $logo ) {
+                    echo '<div class="diary-exhibitor-logo"><img src="' . esc_url( $logo ) . '" alt="' . esc_attr( $exhibitor->post_title ) . '"></div>';
+                }
+                echo '<div class="diary-session-title"><a href="' . esc_url( $permalink ) . '">' . esc_html( $exhibitor->post_title ) . '</a></div>';
+                if ( $stand )   { echo '<div class="diary-session-details">Stand: ' . esc_html( $stand ) . '</div>'; }
+                if ( $website ) { echo '<div class="diary-session-details"><a href="' . esc_url( $website ) . '" target="_blank" rel="noopener">' . esc_html( $website ) . '</a></div>'; }
+                echo '</div>';
+            }
+            echo '</div>';
+            echo '</div>';
+        }
+
+        echo '</div>'; // close .my-diary-container
+    }
+
+    // Add JavaScript to populate sessions and handle exhibitor remove buttons
     $script = '
 <script type="text/javascript">
 var ajaxurl = "' . admin_url('admin-ajax.php') . '";
@@ -440,42 +516,36 @@ var myDiaryConfig = {
   showEmptyMessage: ' . ($show_empty_message ? 'true' : 'false') . '
 };
 
-// Debug logging
-console.log("=== MY DIARY DEBUG ===");
-console.log("AJAX URL:", ajaxurl);
-console.log("Config:", myDiaryConfig);
-console.log("populateMyDiary function available:", typeof populateMyDiary);
-
 function refreshMyDiary() {
-  console.log("Manual refresh triggered");
-  if (typeof populateMyDiary === "function") {
-    populateMyDiary(myDiaryConfig);
-  }
+  if (typeof populateMyDiary === "function") { populateMyDiary(myDiaryConfig); }
+}
+
+// Exhibitor remove button handler
+function miraRemoveExhibitor(id) {
+  var raw = document.cookie.split(";").map(function(c){ return c.trim(); })
+              .find(function(c){ return c.startsWith("ExhibitorItinerary="); });
+  if (!raw) return;
+  try {
+    var ids = JSON.parse(decodeURIComponent(raw.split("=")[1])).filter(function(i){ return String(i) !== String(id); });
+    var exp = new Date(Date.now() + 30 * 864e5).toUTCString();
+    document.cookie = "ExhibitorItinerary=" + encodeURIComponent(JSON.stringify(ids)) + "; expires=" + exp + "; path=/";
+    window.location.reload();
+  } catch(e) {}
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  // Initial population
-  if (typeof populateMyDiary === "function") {
-    populateMyDiary(myDiaryConfig);
-  }
-  
-  // Tab/window focus detection for tab-based interfaces
-  window.addEventListener("focus", function() {
-    console.log("Window gained focus, refreshing diary");
-    if (typeof populateMyDiary === "function") {
-      populateMyDiary(myDiaryConfig);
-    }
+  if (typeof populateMyDiary === "function") { populateMyDiary(myDiaryConfig); }
+
+  // Wire exhibitor remove buttons
+  document.querySelectorAll(".diary-remove-exhibitor-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      miraRemoveExhibitor(this.getAttribute("data-exhibitor-id"));
+    });
   });
-  
-  // Page visibility API for better tab detection
+
   document.addEventListener("visibilitychange", function() {
-    if (!document.hidden) {
-      console.log("Tab became visible, refreshing diary");
-      if (typeof populateMyDiary === "function") {
-        setTimeout(function() {
-          populateMyDiary(myDiaryConfig);
-        }, 100);
-      }
+    if (!document.hidden && typeof populateMyDiary === "function") {
+      setTimeout(function(){ populateMyDiary(myDiaryConfig); }, 100);
     }
   });
 });
@@ -719,6 +789,46 @@ function debug_my_diary_shortcode($atts) {
 }
 
 add_shortcode('debug-my-diary', 'debug_my_diary_shortcode');
+
+// AJAX handler for fetching exhibitor itinerary items
+add_action( 'wp_ajax_get_itinerary_exhibitors',        'handle_get_itinerary_exhibitors' );
+add_action( 'wp_ajax_nopriv_get_itinerary_exhibitors', 'handle_get_itinerary_exhibitors' );
+
+function handle_get_itinerary_exhibitors() {
+    while ( ob_get_level() ) ob_end_clean();
+
+    if ( empty( $_POST['exhibitor_ids'] ) ) {
+        wp_send_json_error( 'No exhibitor IDs provided' );
+    }
+
+    $ids = json_decode( stripslashes( $_POST['exhibitor_ids'] ), true );
+    if ( ! is_array( $ids ) || empty( $ids ) ) {
+        wp_send_json_error( 'Invalid exhibitor IDs' );
+    }
+
+    $exhibitors = array();
+    foreach ( $ids as $id ) {
+        $id   = absint( $id );
+        $post = get_post( $id );
+        if ( ! $post || $post->post_type !== 'exhibitors' || $post->post_status !== 'publish' ) {
+            continue;
+        }
+        $logo = '';
+        if ( has_post_thumbnail( $id ) ) {
+            $logo = get_the_post_thumbnail_url( $id, 'sponsor_detail_photo' ) ?: get_the_post_thumbnail_url( $id, 'medium' );
+        }
+        $exhibitors[] = array(
+            'id'        => $id,
+            'title'     => $post->post_title,
+            'permalink' => get_permalink( $id ),
+            'website'   => get_post_meta( $id, 'website_url', true ),
+            'stand'     => get_post_meta( $id, 'stand_number', true ),
+            'logo'      => $logo,
+        );
+    }
+
+    wp_send_json_success( $exhibitors );
+}
 
 // AJAX handler for fetching diary sessions
 add_action('wp_ajax_get_diary_sessions', 'handle_get_diary_sessions');
@@ -982,9 +1092,8 @@ function mira_agenda_grid_old_enqueue_assets() {
     wp_add_inline_script('mira-mydiary-script', 'console.log("MyDiary JS loaded successfully"); console.log("AJAX URL:", mira_diary_ajax.ajaxurl);');
   }
   
-  // Exhibitor list itinerary button JS (only when setting is enabled)
-  $options = get_option( 'mira_agenda_settings', array() );
-  if ( ! empty( $options['show_on_exhibitor_list'] ) ) {
+  // Exhibitor list itinerary button JS (matches the display_my_agenda() filter condition)
+  if ( (bool) apply_filters( 'mira_show_on_exhibitor_list', false ) ) {
       wp_enqueue_script(
           'mira-myagenda-exhibitor',
           plugin_dir_url( __FILE__ ) . 'assets/js/myagenda-exhibitor.js',

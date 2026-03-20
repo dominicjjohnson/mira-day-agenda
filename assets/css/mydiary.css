@@ -32,6 +32,29 @@ span.myagenda.in-itinerary:hover {
 	background: #c0392b;
 }
 
+/* Section headings (My Sessions / My Exhibitors) */
+.diary-section-heading {
+    font-size: 16px;
+    font-weight: 700;
+    color: #555;
+    border-bottom: 2px solid #e67e22;
+    padding-bottom: 6px;
+    margin: 20px 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.diary-exhibitors-section {
+    margin-top: 24px;
+}
+.diary-exhibitor a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: 600;
+}
+.diary-exhibitor a:hover {
+    text-decoration: underline;
+}
+
 /* MyDiary Display Header */
 .my-diary-header {
     display: flex;
@@ -433,7 +456,8 @@ span.myagenda.in-itinerary:hover {
 }
 
 /* Remove button */
-.diary-remove-btn {
+.diary-remove-btn,
+.diary-remove-exhibitor-btn {
     background: #dc3545;
     color: white;
     border: none;
@@ -447,7 +471,8 @@ span.myagenda.in-itinerary:hover {
     right: 10px;
 }
 
-.diary-remove-btn:hover {
+.diary-remove-btn:hover,
+.diary-remove-exhibitor-btn:hover {
     background: #c82333;
 }
 

@@ -35,6 +35,8 @@ function mira_myagenda_settings_page() {
 		$options['more_button_char_limit']  = isset( $_POST['more_button_char_limit'] ) ? absint( $_POST['more_button_char_limit'] ) : 200;
 		$options['enable_my_diary']         = isset( $_POST['enable_my_diary'] ) ? 'yes' : 'no';
 		$options['show_on_exhibitor_list']  = isset( $_POST['show_on_exhibitor_list'] ) ? true : false;
+		$allowed_styles = array( 'grid', 'list', 'compact' );
+		$options['diary_display_style']     = in_array( $_POST['diary_display_style'] ?? '', $allowed_styles ) ? $_POST['diary_display_style'] : 'grid';
 
 		update_option( 'mira_agenda_settings', $options );
 		echo '<div class="notice notice-success is-dismissible"><p>Settings saved.</p></div>';
@@ -44,6 +46,7 @@ function mira_myagenda_settings_page() {
 	$char_limit           = isset( $options['more_button_char_limit'] ) ? (int) $options['more_button_char_limit'] : 200;
 	$enable_my_diary      = isset( $options['enable_my_diary'] ) ? $options['enable_my_diary'] : 'yes';
 	$show_on_exhibitor    = ! empty( $options['show_on_exhibitor_list'] );
+	$diary_display_style  = isset( $options['diary_display_style'] ) ? $options['diary_display_style'] : 'grid';
 	?>
 	<div class="wrap">
 		<h1>MyAgenda Settings</h1>
@@ -72,7 +75,22 @@ function mira_myagenda_settings_page() {
 				</tr>
 			</table>
 
-			<h2 class="title">Exhibitor List Integration</h2>
+			<h2 class="title">My Personal Agenda Display</h2>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><label for="diary_display_style">Display style</label></th>
+				<td>
+					<select id="diary_display_style" name="diary_display_style">
+						<option value="grid"    <?php selected( $diary_display_style, 'grid' );    ?>>Grid</option>
+						<option value="list"    <?php selected( $diary_display_style, 'list' );    ?>>List</option>
+						<option value="compact" <?php selected( $diary_display_style, 'compact' ); ?>>Compact</option>
+					</select>
+					<p class="description">How sessions and exhibitors are displayed in <code>[display-my-diary]</code>.</p>
+				</td>
+			</tr>
+		</table>
+
+		<h2 class="title">Exhibitor List Integration</h2>
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row">Show on Exhibitor List</th>

@@ -48,6 +48,7 @@
 
 	function initButtons() {
 		var buttons = document.querySelectorAll('span.myagenda[data-exhibitor-id]');
+		console.log('MyAgenda Exhibitor: found ' + buttons.length + ' itinerary buttons');
 		buttons.forEach(function (btn) {
 			var id = String(btn.getAttribute('data-exhibitor-id'));
 			updateButtonState(btn, isInItinerary(id));
