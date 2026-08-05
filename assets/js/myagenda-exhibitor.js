@@ -35,12 +35,14 @@
 	}
 
 	function updateButtonState(btn, inList) {
+		var labelAdd    = btn.getAttribute('data-label-add') || '+ My Itinerary';
+		var labelRemove = btn.getAttribute('data-label-remove') || 'In Itinerary';
 		if (inList) {
-			btn.textContent = 'In Itinerary';
+			btn.textContent = labelRemove;
 			btn.classList.add('in-itinerary');
 			btn.title = 'Click to remove from My Itinerary';
 		} else {
-			btn.textContent = '+ My Itinerary';
+			btn.textContent = labelAdd;
 			btn.classList.remove('in-itinerary');
 			btn.title = 'Click to add to My Itinerary';
 		}

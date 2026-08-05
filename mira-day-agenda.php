@@ -5,10 +5,11 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.38
+ * Version: 1.39
 
  * Author: Miramedia / Dominic Johnson
  *
+ * Version 1.39 - 2026-08-05 - myagenda-exhibitor.js now reads data-label-add/data-label-remove for the itinerary button text instead of hardcoded English, so translated labels from cw-plugin-exhibitors survive clicks
  * Version 1.38 - 2026-08-05 - Plugin folder renamed from miramedia-my-agenda to mira-day-agenda (matches repo/main file/header); requires reactivation on any site with the old path active
  * Version 1.37 - 2026-08-05 - Configurable My Itinerary button colours (default + in-itinerary) in MyAgenda settings
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
@@ -92,7 +93,7 @@
  */
 
  define('DEVMODE', true); // Set to false on production
- define('VERSION', "1.38"); // Updated version - matches plugin header
+ define('VERSION', "1.39"); // Updated version - matches plugin header
  
  // Add at the very top of your plugin file, right after the opening <?php tag
  add_action('admin_enqueue_scripts', function() {
