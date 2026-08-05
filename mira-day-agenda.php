@@ -5,10 +5,11 @@
  *               Params - day = date slug from seminars > dates. defaults to 2025-10-01
  *               Displays a multi-track display for the entire day.
                 
- * Version: 1.36
+ * Version: 1.37
 
  * Author: Miramedia / Dominic Johnson
- * 
+ *
+ * Version 1.37 - 2026-08-05 - Configurable My Itinerary button colours (default + in-itinerary) in MyAgenda settings
  * Version 1.1 - 2025-05-30 - Updated for HCE 2025
  * Version 1.0 - 2024-05-30 - Initial release for Evie
  * Version 1.2. 2025-06-02 - Finalised version, working on hce.
@@ -90,7 +91,7 @@
  */
 
  define('DEVMODE', true); // Set to false on production
- define('VERSION', "1.36"); // Updated version - matches plugin header
+ define('VERSION', "1.37"); // Updated version - matches plugin header
  
  // Add at the very top of your plugin file, right after the opening <?php tag
  add_action('admin_enqueue_scripts', function() {
@@ -1100,6 +1101,18 @@ function mira_agenda_grid_old_enqueue_assets() {
           array(),
           DEVMODE ? time() : VERSION,
           true
+      );
+
+      // Custom button colours from MyAgenda settings (overrides mydiary.css defaults).
+      $agenda_options        = get_option( 'mira_agenda_settings', array() );
+      $myagenda_color        = ! empty( $agenda_options['myagenda_btn_color'] )        ? $agenda_options['myagenda_btn_color']        : '#e67e22';
+      $myagenda_color_active = ! empty( $agenda_options['myagenda_btn_color_active'] ) ? $agenda_options['myagenda_btn_color_active'] : '#999999';
+
+      wp_register_style( 'mira-myagenda-exhibitor-style', false );
+      wp_enqueue_style( 'mira-myagenda-exhibitor-style' );
+      wp_add_inline_style( 'mira-myagenda-exhibitor-style',
+          'span.myagenda { background: ' . esc_html( $myagenda_color ) . '; }' .
+          'span.myagenda.in-itinerary { background: ' . esc_html( $myagenda_color_active ) . '; }'
       );
   }
 

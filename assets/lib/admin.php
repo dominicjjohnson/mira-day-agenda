@@ -20,6 +20,19 @@ function mira_myagenda_register_menu() {
 }
 
 // ---------------------------------------------------------------
+// Colour picker assets, MyAgenda settings page only
+// ---------------------------------------------------------------
+add_action( 'admin_enqueue_scripts', 'mira_myagenda_settings_colour_picker_assets' );
+function mira_myagenda_settings_colour_picker_assets( $hook ) {
+	if ( $hook !== 'toplevel_page_mira-myagenda' ) {
+		return;
+	}
+	wp_enqueue_style( 'wp-color-picker' );
+	wp_enqueue_script( 'wp-color-picker' );
+	wp_add_inline_script( 'wp-color-picker', 'jQuery(function($){ $(".mira-color-field").wpColorPicker(); });' );
+}
+
+// ---------------------------------------------------------------
 // Settings page
 // ---------------------------------------------------------------
 function mira_myagenda_settings_page() {
@@ -35,6 +48,8 @@ function mira_myagenda_settings_page() {
 		$options['more_button_char_limit']  = isset( $_POST['more_button_char_limit'] ) ? absint( $_POST['more_button_char_limit'] ) : 200;
 		$options['enable_my_diary']         = isset( $_POST['enable_my_diary'] ) ? 'yes' : 'no';
 		$options['show_on_exhibitor_list']  = isset( $_POST['show_on_exhibitor_list'] ) ? true : false;
+		$options['myagenda_btn_color']        = isset( $_POST['myagenda_btn_color'] )        ? sanitize_hex_color( $_POST['myagenda_btn_color'] )        : '';
+		$options['myagenda_btn_color_active'] = isset( $_POST['myagenda_btn_color_active'] ) ? sanitize_hex_color( $_POST['myagenda_btn_color_active'] ) : '';
 		$allowed_styles = array( 'grid', 'list', 'compact' );
 		$options['diary_display_style']     = in_array( $_POST['diary_display_style'] ?? '', $allowed_styles ) ? $_POST['diary_display_style'] : 'grid';
 
@@ -47,6 +62,8 @@ function mira_myagenda_settings_page() {
 	$enable_my_diary      = isset( $options['enable_my_diary'] ) ? $options['enable_my_diary'] : 'yes';
 	$show_on_exhibitor    = ! empty( $options['show_on_exhibitor_list'] );
 	$diary_display_style  = isset( $options['diary_display_style'] ) ? $options['diary_display_style'] : 'grid';
+	$myagenda_btn_color        = ! empty( $options['myagenda_btn_color'] )        ? $options['myagenda_btn_color']        : '#e67e22';
+	$myagenda_btn_color_active = ! empty( $options['myagenda_btn_color_active'] ) ? $options['myagenda_btn_color_active'] : '#999999';
 	?>
 	<div class="wrap">
 		<h1>MyAgenda Settings</h1>
@@ -100,6 +117,20 @@ function mira_myagenda_settings_page() {
 							Add a small <strong>My Itinerary</strong> button next to each exhibitor name in the list
 						</label>
 						<p class="description">Default: off. Requires the cw-plugin-exhibitors plugin.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="myagenda_btn_color">Button colour</label></th>
+					<td>
+						<input type="text" id="myagenda_btn_color" name="myagenda_btn_color" class="mira-color-field" value="<?php echo esc_attr( $myagenda_btn_color ); ?>" data-default-color="#e67e22" />
+						<p class="description">Background colour of the button when the exhibitor is <strong>not</strong> in the itinerary.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="myagenda_btn_color_active">Button colour (in itinerary)</label></th>
+					<td>
+						<input type="text" id="myagenda_btn_color_active" name="myagenda_btn_color_active" class="mira-color-field" value="<?php echo esc_attr( $myagenda_btn_color_active ); ?>" data-default-color="#999999" />
+						<p class="description">Background colour of the button once the exhibitor has been added to the itinerary.</p>
 					</td>
 				</tr>
 			</table>
