@@ -154,7 +154,7 @@ function mira_myagenda_settings_page() {
 }
 
 // ---------------------------------------------------------------
-// Filter: let miramedia-my-agenda control the exhibitor list button
+// Filter: let mira-day-agenda control the exhibitor list button
 // ---------------------------------------------------------------
 add_filter( 'mira_show_on_exhibitor_list', 'mira_myagenda_show_on_exhibitor_list' );
 function mira_myagenda_show_on_exhibitor_list( $default ) {
