@@ -1155,12 +1155,20 @@ add_action( 'admin_enqueue_scripts', 'mira_agenda_admin_enqueue_assets', 5 );
 // Add Permissions Policy header to allow unload events (for WP Bakery compatibility)
  function mira_agenda_set_permissions_policy() {
      global $pagenow;
-     
+
      // Skip on media library and other non-WP Bakery pages
      if ($pagenow === 'upload.php' || $pagenow === 'media-upload.php' || $pagenow === 'media-new.php') {
          return;
      }
-     
+
+     // Never run on XML/sitemap/feed requests — echoing raw output here (on
+     // 'init', before any content-type header is sent) corrupts XML output,
+     // e.g. breaking Yoast's sitemap_index.xml.
+     $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
+     if ( preg_match( '#\.xml(\?|$)#i', $request_uri ) || false !== strpos( $request_uri, 'sitemap' ) || false !== strpos( $request_uri, '/feed' ) ) {
+         return;
+     }
+
      // Only apply when WP Bakery editor is actually active
      if ((isset($_GET['vc_editable']) && $_GET['vc_editable']) || 
          (isset($_GET['vc_action']) && $_GET['vc_action']) ||
